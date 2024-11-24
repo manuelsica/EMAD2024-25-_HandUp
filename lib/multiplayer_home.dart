@@ -44,6 +44,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
   late Animation<Offset> _offsetAnimation;
   bool _isContainerVisible = false;
   String _lobbyType = 'Spelling';
+  int _nrPlayers = 2;
 
   @override
   void initState() {
@@ -331,7 +332,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
             child: Align(
               alignment: Alignment.bottomCenter,
               child: Container(
-                height: screenHeight * 0.5,
+                height: screenHeight * 0.6,
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: Colors.purple.shade900,
@@ -357,7 +358,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                               ),
                             ),
                             onPressed: () {
-                              Scaffold.of(context).openDrawer();
+                              _toggleContainer();
                             },
                           );
                         }),
@@ -395,7 +396,8 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: DropdownButton<String>(
-                          value: _lobbyType,
+                          // value: _lobbyType,
+                          hint: Text('Select Game Type'),
                           dropdownColor: Colors.purple.shade800,
                           style: TextStyle(color: Colors.white),
                           icon:
@@ -418,17 +420,107 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                         ),
                       ),                      
                       SizedBox(height: 20),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.pink,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 40, vertical: 15),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
+                      Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.purple.shade800,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: DropdownButton<int>(
+                          // value: _nrPlayers,
+                          hint: Text('Select Number of Players'),
+                          dropdownColor: Colors.purple.shade800,
+                          style: TextStyle(color: Colors.white),
+                          icon:
+                              Icon(Icons.arrow_drop_down, color: Colors.white),
+                          isExpanded: true,
+                          underline: SizedBox(),
+                          menuMaxHeight: 200,
+                          onChanged: (int? newValue) {
+                            setState(() {
+                              _nrPlayers = newValue!;
+                            });
+                          },
+                          items: <int>[ 2, 3, 4].map<DropdownMenuItem<int>>((int value) {
+                            return DropdownMenuItem<int>(
+                              value: value,
+                              child: Text(value.toString()),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Password (opzionale)',
+                          hintStyle: TextStyle(color: Colors.white70),
+                          filled: true,
+                          fillColor: Colors.purple.shade800,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide.none,
                           ),
                         ),
-                        onPressed: _toggleContainer,
-                        child: Text('Create', style: TextStyle(fontSize: 18)),
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      SizedBox(height: 20),
+
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(30),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.pink.withOpacity(0.8),
+                              blurRadius: 20,
+                              spreadRadius: 4,
+                              offset: const Offset(0, 0),
+                            ),
+                          ],
+                        ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Color.fromARGB(110, 214, 57, 196),
+                                Color.fromARGB(110, 255, 0, 208),
+                                Color.fromARGB(110, 140, 53, 232)
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(30),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.transparent,
+                                blurRadius: 20,
+                                spreadRadius: 4,
+                                offset: const Offset(0, 0),
+                              ),
+                            ],
+                          ),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 15, vertical: 5),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              elevation: 0,
+                              shadowColor: Colors.transparent,
+                            ),
+                            onPressed: _toggleContainer,
+                            child: const Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 15,
+                                  vertical: 8,
+                                ),
+                                child: Text(
+                                  "Crea",
+                                )),
+                          ),
+                        ),
                       ),
                     ],
                   ),
