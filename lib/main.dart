@@ -131,19 +131,7 @@ class HomeScreen extends StatelessWidget {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      'Allenati con parole casuali',
-                                      style: TextStyle(
-                                        fontSize: screenWidth * 0.07,
-                                        fontWeight: FontWeight.bold,
-                                        foreground: Paint()
-                                          ..shader = AppColors.getTextShader(
-                                            screenWidth,
-                                            screenHeight,
-                                          ),
-                                        // color: Colors.pink,
-                                      ),
-                                    ),
+                                    AppColors.gradientText("Allenati con parole casuali", screenWidth * 0.07),
                                     const SizedBox(height: 0),
                                     
                                     Padding(
@@ -284,26 +272,19 @@ class HomeScreen extends StatelessWidget {
           ),
           ListTile(
             contentPadding: const EdgeInsets.fromLTRB(100, 10, 20, 10),
-            title: Text(
-              title,
-              style: TextStyle(
-                fontSize: screenWidth * 0.048,
-                // color: Colors.pink,
-                fontWeight: FontWeight.bold,
-                foreground: Paint()
-                  ..shader = AppColors.getTextShader(screenWidth, screenHeight),
-              ),
-            ),
+            title: 
+            AppColors.gradientText(title, screenWidth * 0.048),
             trailing: isLocked
                 ? Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      ShaderMask(
-                        shaderCallback: (bounds) =>
-                            AppColors.getTextShader(screenWidth, screenHeight),
-                        child: const Icon(Icons.lock, color: Color.fromARGB(71, 255, 255, 255)),
-                      ),
-                      // const Icon(Icons.lock, color: Colors.grey),
+                          CustomPaint(
+                            size: Size(screenWidth * 0.04, screenWidth * 0.04),
+                            painter: GradientIconPainter(
+                              icon: Icons.person,
+                              gradient: AppColors.textGradient,
+                            )
+                          ),
                       const SizedBox(width: 8),
                       Text(
                         'Costo: $points punti',

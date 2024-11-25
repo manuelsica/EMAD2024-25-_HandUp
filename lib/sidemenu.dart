@@ -3,6 +3,7 @@ import "package:hand_up_interface/main.dart";
 import "app_colors.dart";
 import "multiplayer_home.dart";
 import "main.dart";
+import "classifiche.dart";
 
 class SideMenu extends StatelessWidget {
   @override
@@ -68,13 +69,19 @@ class SideMenu extends StatelessWidget {
                 leading: const Icon(Icons.star, color: Colors.white),
                 title: const Text('Classifiche',
                     style: TextStyle(color: Colors.white)),
-                onTap: () => Navigator.pop(context),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => LeaderboardScreen()),
+                ),
               ),
               ListTile(
                 leading: const Icon(Icons.store, color: Colors.white),
                 title: const Text('Shop',
                     style: TextStyle(color: Colors.white)),
-                onTap: () => Navigator.pop(context),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => MultiplayerHome()),
+                ),
               ),
               ListTile(
                 leading: const Icon(Icons.menu_book, color: Colors.white),

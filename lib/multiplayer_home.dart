@@ -182,16 +182,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        'Crea una partita',
-                                        style: TextStyle(
-                                          fontSize: screenWidth * 0.07,
-                                          fontWeight: FontWeight.bold,
-                                          foreground: Paint()
-                                            ..shader = AppColors.getTextShader(
-                                                screenWidth, screenHeight),
-                                        ),
-                                      ),
+                                      AppColors.gradientText("Crea una partita", screenWidth * 0.07),
                                       const SizedBox(height: 40),
                                       Align(
                                         alignment: Alignment.centerLeft,
@@ -269,18 +260,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                             ),
                           ),
                           const SizedBox(height: 20),
-
-                          // Join Game Section
-                          Text(
-                            'Unisciti ad una Partita',
-                            style: TextStyle(
-                              fontSize: screenWidth * 0.07,
-                              fontWeight: FontWeight.bold,
-                              foreground: Paint()
-                                ..shader = AppColors.getTextShader(
-                                    screenWidth, screenHeight),
-                            ),
-                          ),
+                          AppColors.gradientText("Unisciti ad una Partita", screenWidth * 0.07),
                           const SizedBox(height: 10),
 
                           // Lobby List
@@ -363,16 +343,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                           );
                         }),
                       ),
-                      Text(
-                        'Create Lobby',
-                        style: TextStyle(
-                          fontSize: screenWidth * 0.07,
-                          fontWeight: FontWeight.bold,
-                          foreground: Paint()
-                            ..shader = AppColors.getTextShader(
-                                screenWidth, screenHeight),
-                        ),                      
-                      ),                      
+                      AppColors.gradientText("Create Lobby", screenWidth * 0.07),
                       SizedBox(height: 20),
                       TextField(
                         decoration: InputDecoration(
@@ -561,15 +532,8 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
           ),
           ListTile(
             contentPadding: const EdgeInsets.fromLTRB(100, 10, 20, 10),
-            title: Text(
-              title,
-              style: TextStyle(
-                fontSize: screenWidth * 0.048,
-                fontWeight: FontWeight.bold,
-                foreground: Paint()
-                  ..shader = AppColors.getTextShader(screenWidth, screenHeight),
-              ),
-            ),
+            title: 
+            AppColors.gradientText(title, screenWidth * 0.048),
             subtitle: Row(
               children: [
                 CustomPaint(
