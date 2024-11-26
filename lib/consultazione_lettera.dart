@@ -5,41 +5,73 @@ import "sidemenu.dart";
 import "app_colors.dart";
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
-import 'package:hand_up_interface/consultazione_lettera.dart';
-
-
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]).then((_) {
-    runApp(const Consultazione());
+    runApp(MyApp());
   });
 }
-class Consultazione extends StatelessWidget {
-  const Consultazione({Key? key}) : super(key: key);
 
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Consultazione Lettera',
       theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF0A0E21),
-        textTheme: GoogleFonts.poppinsTextTheme(),
+        primarySwatch: Colors.purple,
       ),
-      home: const ConsultazioneScreen(),
+      home: HomeScreen(), // Imposta una schermata iniziale
     );
   }
 }
-class ConsultazioneScreen extends StatefulWidget {
-  const ConsultazioneScreen({Key? key}) : super(key: key);
 
+class HomeScreen extends StatelessWidget {
   @override
-  _ConsultazioneScreenState createState() => _ConsultazioneScreenState();
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Seleziona una Lettera')),
+      body: Center(child: Text('Benvenuto!')),
+    );
+  }
 }
 
-class _ConsultazioneScreenState extends State<ConsultazioneScreen>
+
+class ConsultazioneLettera extends StatelessWidget {
+  final String lettera;
+
+  const ConsultazioneLettera({Key? key, required this.lettera}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Pagina Lettera $lettera'),
+      ),
+      body: Center(
+        child: Text(
+          'Hai selezionato la lettera $lettera!',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.purple,
+          ),
+        ),
+      ),
+    );
+  }
+}
+class ConsultazioneLetteraScreen extends StatefulWidget {
+  const ConsultazioneLetteraScreen({Key? key}) : super(key: key);
+
+  @override
+  _ConsultazioneLetteraScreenState createState() => _ConsultazioneLetteraScreenState();
+}
+
+class _ConsultazioneLetteraScreenState extends State<ConsultazioneLetteraScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<Offset> _offsetAnimation;
@@ -183,7 +215,7 @@ class _ConsultazioneScreenState extends State<ConsultazioneScreen>
                                         CrossAxisAlignment.center,
                                     children: [
                                       Text(
-                                        'Libreria di Consultazione',
+                                        'Libreria di ConsultazioneLettera',
                                         style: TextStyle(
                                           fontSize: screenWidth * 0.07,
                                           fontWeight: FontWeight.bold,
@@ -246,7 +278,7 @@ class _ConsultazioneScreenState extends State<ConsultazioneScreen>
 
                           // Join Game Section
                           Text(
-                            'Seleziona una Lettera',
+                            'Lettera A',
                             style: TextStyle(
                               fontSize: screenWidth * 0.07,
                               fontWeight: FontWeight.bold,
@@ -255,18 +287,7 @@ class _ConsultazioneScreenState extends State<ConsultazioneScreen>
                           ),
                           const SizedBox(height: 10),
                           // Lobby List
-                          Column(
-                              children: List.generate(26, (index) {
-                                // Genera una lettera a partire dall'indice
-                                String lettera = String.fromCharCode(65 + index); // 65 è il codice ASCII di 'A'
-                                return _buildLobbyItem(
-                                  lettera: lettera,
-                                  screenWidth: screenWidth,
-                                  screenHeight: screenHeight,
-                                  context: context, // Passa il contesto per la navigazione
-                                );
-                              }),
-                            ),
+                         
                           // Back Button
                           const SizedBox(height: 20),
                         ],
@@ -388,59 +409,50 @@ class _ConsultazioneScreenState extends State<ConsultazioneScreen>
       ),
     );
   }
+  
   Widget _buildLobbyItem({
   required String lettera,
   required double screenWidth,
   required double screenHeight,
-  required BuildContext context, // Aggiunto per gestire Navigator
 }) {
-  return GestureDetector(
-    onTap: () => Navigator.push(
-      context,
-      MaterialPageRoute(
-       builder: (context) => ConsultazioneLettera(lettera: lettera),
-      ),
+  return Container(
+    margin: const EdgeInsets.only(bottom: 16),
+    decoration: BoxDecoration(
+      color: AppColors.containerOpaqueColor,
+      borderRadius: BorderRadius.circular(15),
     ),
-    child: Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: AppColors.containerOpaqueColor,
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Scritta "LETTERA"
-                Text(
-                  'LETTERA',
-                  style: TextStyle(
-                    fontSize: screenWidth * 0.048,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textColor1, // Colore specificato nel TextStyle
-                  ),
+    child: Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Scritta "LETTERA"
+              Text(
+                'LETTERA',
+                style: TextStyle(
+                  fontSize: screenWidth * 0.048,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textColor1, // Colore specificato nel TextStyle
                 ),
-                SizedBox(width: screenWidth * 0.02), // Spaziatura tra "LETTERA" e la lettera
-                // Lettera specifica
-                Text(
-                  lettera,
-                  style: TextStyle(
-                    fontSize: screenWidth * 0.048,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textColor3, // Colore specificato nel TextStyle
-                  ),
+              ),
+              SizedBox(width: screenWidth * 0.02), // Spaziatura tra "LETTERA" e la lettera
+              // Lettera specifica
+              Text(
+                lettera,
+                style: TextStyle(
+                  fontSize: screenWidth * 0.048,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textColor3, // Colore specificato nel TextStyle
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     ),
   );
 }
-
     }
