@@ -4,6 +4,7 @@ import 'package:hand_up_interface/main.dart';
 import "sidemenu.dart";
 import "app_colors.dart";
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/material.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -184,9 +185,7 @@ class _ConsultazioneScreenState extends State<ConsultazioneScreen>
                                         style: TextStyle(
                                           fontSize: screenWidth * 0.07,
                                           fontWeight: FontWeight.bold,
-                                          foreground: Paint()
-                                            ..shader = AppColors.getTextShader(
-                                                screenWidth, screenHeight,context,context),
+                                          color: AppColors.textColor2 
                                         ),
                                       ),
                                       const SizedBox(height: 40),
@@ -249,37 +248,22 @@ class _ConsultazioneScreenState extends State<ConsultazioneScreen>
                             style: TextStyle(
                               fontSize: screenWidth * 0.07,
                               fontWeight: FontWeight.bold,
-                              foreground: Paint()
-                                ..shader = AppColors.getTextShader(
-                                    screenWidth, screenHeight,context,context),
+                              color : AppColors.textColor1
                             ),
                           ),
                           const SizedBox(height: 10),
                           // Lobby List
-                          _buildLobbyItem(
-                              lettera: 'A',
-                              screenWidth: screenWidth,
-                              screenHeight: screenHeight),
-                          _buildLobbyItem(
-                              lettera: 'B',
-                              screenWidth: screenWidth,
-                              screenHeight: screenHeight,
- ),
-                          _buildLobbyItem(
-                              lettera: 'C',
-                              screenWidth: screenWidth,
-                              screenHeight: screenHeight),
-                          _buildLobbyItem(
-                              lettera: 'D',
+                           Column(
+                          children: List.generate(26, (index) {
+                            // Genera una lettera a partire dall'indice
+                            String lettera = String.fromCharCode(65 + index); // 65 è il codice ASCII di 'A'
+                            return _buildLobbyItem(
+                              lettera: lettera,
                               screenWidth: screenWidth,
                               screenHeight: screenHeight,
- ),
-                          _buildLobbyItem(
- 
-                              lettera: 'E',
-                              screenWidth: screenWidth,
-                              screenHeight: screenHeight,
- ),
+                            );
+                          }),
+                        ),
                           // Back Button
                           const SizedBox(height: 20),
                         ],
@@ -330,10 +314,7 @@ class _ConsultazioneScreenState extends State<ConsultazioneScreen>
                         'Create Lobby',
                         style: TextStyle(
                           fontSize: screenWidth * 0.07,
-                          fontWeight: FontWeight.bold,
-                          foreground: Paint()
-                            ..shader = AppColors.getTextShader(
-                                screenWidth, screenHeight,context,context),
+                          fontWeight: FontWeight.bold
                         ),                      
                       ),                      
                       SizedBox(height: 20),
@@ -404,6 +385,7 @@ class _ConsultazioneScreenState extends State<ConsultazioneScreen>
       ),
     );
   }
+  
   Widget _buildLobbyItem({
   required String lettera,
   required double screenWidth,
@@ -418,7 +400,6 @@ class _ConsultazioneScreenState extends State<ConsultazioneScreen>
     child: Stack(
       clipBehavior: Clip.none,
       children: [
-        
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
           child: Row(
@@ -430,8 +411,7 @@ class _ConsultazioneScreenState extends State<ConsultazioneScreen>
                 style: TextStyle(
                   fontSize: screenWidth * 0.048,
                   fontWeight: FontWeight.bold,
-                  foreground: Paint()
-                    ..shader = AppColors.getTextShader(screenWidth, screenHeight,context,context),
+                  color: AppColors.textColor1, // Colore specificato nel TextStyle
                 ),
               ),
               SizedBox(width: screenWidth * 0.02), // Spaziatura tra "LETTERA" e la lettera
@@ -441,8 +421,7 @@ class _ConsultazioneScreenState extends State<ConsultazioneScreen>
                 style: TextStyle(
                   fontSize: screenWidth * 0.048,
                   fontWeight: FontWeight.bold,
-                  foreground: Paint()
-                    ..shader = AppColors.getTextShader(screenWidth, screenHeight,context,context),
+                  color: AppColors.textColor3, // Colore specificato nel TextStyle
                 ),
               ),
             ],
@@ -452,6 +431,4 @@ class _ConsultazioneScreenState extends State<ConsultazioneScreen>
     ),
   );
 }
-
-
     }
