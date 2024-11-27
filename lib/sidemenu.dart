@@ -1,4 +1,5 @@
 import "package:flutter/material.dart";
+import "package:hand_up_interface/consultazione.dart";
 import "package:hand_up_interface/main.dart";
 import "app_colors.dart";
 import "multiplayer_home.dart";
@@ -87,7 +88,10 @@ class SideMenu extends StatelessWidget {
                 leading: const Icon(Icons.menu_book, color: Colors.white),
                 title: const Text('Consultazione',
                     style: TextStyle(color: Colors.white)),
-                onTap: () => Navigator.pop(context),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Consultazione()),
+                ),
               ),
               ListTile(
                 leading: const Icon(Icons.settings, color: Colors.white),

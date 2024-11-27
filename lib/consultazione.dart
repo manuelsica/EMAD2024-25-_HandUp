@@ -153,9 +153,9 @@ class _ConsultazioneScreenState extends State<ConsultazioneScreen>
                         children: [
                           // Create Game Card
                           Container(
-                            height: screenHeight * 0.3,
+                            height: screenHeight * 0.15,
                             width: screenWidth * 0.9,
-                            padding: const EdgeInsets.fromLTRB(20, 20, 60, 60),
+                            padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
                             decoration: BoxDecoration(
                               color: Colors.transparent,
                               border: Border.all(
@@ -167,47 +167,29 @@ class _ConsultazioneScreenState extends State<ConsultazioneScreen>
                             child: Stack(
                               clipBehavior: Clip.none,
                               children: [
-                                Positioned(
-                                  right: -screenWidth * 0.35,
-                                  bottom: -screenHeight * 0.4,
-                                  child: Image.asset(
-                                    'assets/hand_coin.png',
-                                    width: screenWidth * 0.9,
-                                    height: screenHeight * 0.9,
-                                  ),
-                                ),
+                                
                                 Padding(
                                   padding: const EdgeInsets.all(0),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.center,
+                                        mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Text(
                                         'Libreria di Consultazione',
                                         style: TextStyle(
-                                          fontSize: screenWidth * 0.07,
+                                          fontSize: screenWidth * 0.06,
                                           fontWeight: FontWeight.bold,
-                                          color: AppColors.textColor2 
+                                          color: AppColors.textColor2,
+                                      
                                         ),
+                                        
                                       ),
                                       const SizedBox(height: 40),
                                       Align(
                                         alignment: Alignment.center,
                                         child: Container(
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(30),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.pink
-                                                    .withOpacity(0.8),
-                                                blurRadius: 20,
-                                                spreadRadius: 4,
-                                                offset: const Offset(0, 0),
-                                              ),
-                                            ],
-                                          ),
-                                          child: Container(
+                                            child: Container(
                                             decoration: BoxDecoration(
                                               gradient: LinearGradient(
                                                 colors: [
@@ -274,113 +256,6 @@ class _ConsultazioneScreenState extends State<ConsultazioneScreen>
                     ),
                   ),
                 ],
-              ),
-            ),
-          ),
-          SlideTransition(
-            position: _offsetAnimation,
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: Container(
-                height: screenHeight * 0.5,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.purple.shade900,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Align(
-                        alignment: Alignment.topRight,
-                        child: Builder(builder: (BuildContext context) {
-                          return IconButton(
-                            icon: CustomPaint(
-                              size: Size(24, 24),
-                              painter: GradientIconPainter(
-                                icon: Icons.close,
-                                gradient: AppColors.textGradient,
-                              ),
-                            ),
-                            onPressed: () {
-                              Scaffold.of(context).openDrawer();
-                            },
-                          );
-                        }),
-                      ),
-                      Text(
-                        'Create Lobby',
-                        style: TextStyle(
-                          fontSize: screenWidth * 0.07,
-                          fontWeight: FontWeight.bold
-                        ),                      
-                      ),                      
-                      SizedBox(height: 20),
-                      TextField(
-                        decoration: InputDecoration(
-                          hintText: 'Enter lobby name',
-                          hintStyle: TextStyle(color: Colors.white70),
-                          filled: true,
-                          fillColor: Colors.purple.shade800,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      SizedBox(height: 20),
-                      Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.purple.shade800,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: DropdownButton<String>(
-                          value: _lobbyType,
-                          dropdownColor: Colors.purple.shade800,
-                          style: TextStyle(color: Colors.white),
-                          icon:
-                              Icon(Icons.arrow_drop_down, color: Colors.white),
-                          isExpanded: true,
-                          underline: SizedBox(),
-                          menuMaxHeight: 200,
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              _lobbyType = newValue!;
-                            });
-                          },
-                          items: <String>["Spelling", "Matematica", "Scarabeo", "Impiccato"]
-                              .map<DropdownMenuItem<String>>((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
-                        ),
-                      ),                      
-                      SizedBox(height: 20),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.pink,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 40, vertical: 15),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        onPressed: _toggleContainer,
-                        child: Text('Create', style: TextStyle(fontSize: 18)),
-                      ),
-                    ],
-                  ),
-                ),
               ),
             ),
           ),
