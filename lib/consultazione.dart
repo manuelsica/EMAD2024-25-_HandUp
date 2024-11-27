@@ -155,7 +155,7 @@ class _ConsultazioneScreenState extends State<ConsultazioneScreen>
                           Container(
                             height: screenHeight * 0.15,
                             width: screenWidth * 0.9,
-                            padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                            padding: const EdgeInsets.fromLTRB(20, 40, 20, 0),
                             decoration: BoxDecoration(
                               color: Colors.transparent,
                               border: Border.all(

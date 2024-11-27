@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:hand_up_interface/main.dart';
+// import 'package:hand_up_interface/main.dart'; // Rimuovilo se non necessario
 import "sidemenu.dart";
 import "app_colors.dart";
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter/material.dart';
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([
@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.purple,
       ),
-      home: HomeScreen(), // Imposta una schermata iniziale
+      home: HomeScreen(),
     );
   }
 }
@@ -39,77 +39,10 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-
 class ConsultazioneLettera extends StatelessWidget {
   final String lettera;
 
   const ConsultazioneLettera({Key? key, required this.lettera}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Pagina Lettera $lettera'),
-      ),
-      body: Center(
-        child: Text(
-          'Hai selezionato la lettera $lettera!',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.purple,
-          ),
-        ),
-      ),
-    );
-  }
-}
-class ConsultazioneLetteraScreen extends StatefulWidget {
-  const ConsultazioneLetteraScreen({Key? key}) : super(key: key);
-
-  @override
-  _ConsultazioneLetteraScreenState createState() => _ConsultazioneLetteraScreenState();
-}
-
-class _ConsultazioneLetteraScreenState extends State<ConsultazioneLetteraScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<Offset> _offsetAnimation;
-  bool _isContainerVisible = false;
-  String _lobbyType = 'Spelling';
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _offsetAnimation = Tween<Offset>(
-      begin: const Offset(0, 1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOut,
-    ));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _toggleContainer() {
-    setState(() {
-      _isContainerVisible = !_isContainerVisible;
-      if (_isContainerVisible) {
-        _controller.forward();
-      } else {
-        _controller.reverse();
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -124,16 +57,17 @@ class _ConsultazioneLetteraScreenState extends State<ConsultazioneLetteraScreen>
             decoration: const BoxDecoration(
               color: AppColors.backgroundColor,
             ),
-            child: SafeArea(
-              child: Column(
-                children: [
-                  // App Bar
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Builder(builder: (BuildContext context) {
+          ),
+          SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Builder(
+                        builder: (BuildContext context) {
                           return IconButton(
                             icon: CustomPaint(
                               size: Size(24, 24),
@@ -146,313 +80,70 @@ class _ConsultazioneLetteraScreenState extends State<ConsultazioneLetteraScreen>
                               Scaffold.of(context).openDrawer();
                             },
                           );
-                        }),
-                        const Row(
-                          children: [
-                            CircleAvatar(
-                              backgroundColor: Colors.purple,
-                              child: Text('U',
-                                  style: TextStyle(color: Colors.white)),
-                            ),
-                            SizedBox(width: 8),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Username',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white),
-                                ),
-                                Text(
-                                  '000 Punti',
-                                  style: TextStyle(
-                                      color: Colors.grey, fontSize: 12),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Main Content
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
+                        },
+                      ),
+                      Row(
                         children: [
-                          // Create Game Card
-                          Container(
-                            height: screenHeight * 0.3,
-                            width: screenWidth * 0.9,
-                            padding: const EdgeInsets.fromLTRB(20, 20, 60, 60),
-                            decoration: BoxDecoration(
-                              color: Colors.transparent,
-                              border: Border.all(
-                                color: AppColors.textColor2,
-                                width: 2,
+                          CircleAvatar(
+                            backgroundColor: Colors.purple,
+                            child: Text(
+                              'U',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Username',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                               ),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                Positioned(
-                                  right: -screenWidth * 0.35,
-                                  bottom: -screenHeight * 0.4,
-                                  child: Image.asset(
-                                    'assets/hand_coin.png',
-                                    width: screenWidth * 0.9,
-                                    height: screenHeight * 0.9,
-                                  ),
+                              Text(
+                                '000 Punti',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 12,
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.all(0),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        'Libreria di ConsultazioneLettera',
-                                        style: TextStyle(
-                                          fontSize: screenWidth * 0.07,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.textColor2 
-                                        ),
-                                      ),
-                                      const SizedBox(height: 40),
-                                      Align(
-                                        alignment: Alignment.center,
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(30),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.pink
-                                                    .withOpacity(0.8),
-                                                blurRadius: 20,
-                                                spreadRadius: 4,
-                                                offset: const Offset(0, 0),
-                                              ),
-                                            ],
-                                          ),
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              gradient: LinearGradient(
-                                                colors: [
-                                                  Color.fromARGB(
-                                                      110, 214, 57, 196),
-                                                  Color.fromARGB(
-                                                      110, 255, 0, 208),
-                                                  Color.fromARGB(
-                                                      110, 140, 53, 232)
-                                                ],
-                                                begin: Alignment.topLeft,
-                                                end: Alignment.bottomRight,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(30),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.transparent,
-                                                  blurRadius: 20,
-                                                  spreadRadius: 4,
-                                                  offset: const Offset(0, 0),
-                                                ),
-                                              ],
-                                            ),
-                  
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 20),
-
-                          // Join Game Section
-                          Text(
-                            'Lettera A',
-                            style: TextStyle(
-                              fontSize: screenWidth * 0.07,
-                              fontWeight: FontWeight.bold,
-                              color : AppColors.textColor1
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          // Lobby List
-                         
-                          // Back Button
-                          const SizedBox(height: 20),
                         ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SlideTransition(
-            position: _offsetAnimation,
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: Container(
-                height: screenHeight * 0.5,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.purple.shade900,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Align(
-                        alignment: Alignment.topRight,
-                        child: Builder(builder: (BuildContext context) {
-                          return IconButton(
-                            icon: CustomPaint(
-                              size: Size(24, 24),
-                              painter: GradientIconPainter(
-                                icon: Icons.close,
-                                gradient: AppColors.textGradient,
-                              ),
-                            ),
-                            onPressed: () {
-                              Scaffold.of(context).openDrawer();
-                            },
-                          );
-                        }),
-                      ),
-                      Text(
-                        'Create Lobby',
-                        style: TextStyle(
-                          fontSize: screenWidth * 0.07,
-                          fontWeight: FontWeight.bold
-                        ),                      
-                      ),                      
-                      SizedBox(height: 20),
-                      TextField(
-                        decoration: InputDecoration(
-                          hintText: 'Enter lobby name',
-                          hintStyle: TextStyle(color: Colors.white70),
-                          filled: true,
-                          fillColor: Colors.purple.shade800,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      SizedBox(height: 20),
-                      Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.purple.shade800,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: DropdownButton<String>(
-                          value: _lobbyType,
-                          dropdownColor: Colors.purple.shade800,
-                          style: TextStyle(color: Colors.white),
-                          icon:
-                              Icon(Icons.arrow_drop_down, color: Colors.white),
-                          isExpanded: true,
-                          underline: SizedBox(),
-                          menuMaxHeight: 200,
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              _lobbyType = newValue!;
-                            });
-                          },
-                          items: <String>["Spelling", "Matematica", "Scarabeo", "Impiccato"]
-                              .map<DropdownMenuItem<String>>((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
-                        ),
-                      ),                      
-                      SizedBox(height: 20),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.pink,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 40, vertical: 15),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        onPressed: _toggleContainer,
-                        child: Text('Create', style: TextStyle(fontSize: 18)),
                       ),
                     ],
                   ),
                 ),
-              ),
+                Container(
+                  height: screenHeight * 0.15,
+                  width: screenWidth * 0.9,
+                  padding: const EdgeInsets.fromLTRB(20, 40, 20, 0),
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    border: Border.all(
+                      color: AppColors.textColor2,
+                      width: 2,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Lettera $lettera',
+                      style: TextStyle(
+                        fontSize: screenWidth * 0.06,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textColor2,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
-  
-  Widget _buildLobbyItem({
-  required String lettera,
-  required double screenWidth,
-  required double screenHeight,
-}) {
-  return Container(
-    margin: const EdgeInsets.only(bottom: 16),
-    decoration: BoxDecoration(
-      color: AppColors.containerOpaqueColor,
-      borderRadius: BorderRadius.circular(15),
-    ),
-    child: Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Scritta "LETTERA"
-              Text(
-                'LETTERA',
-                style: TextStyle(
-                  fontSize: screenWidth * 0.048,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textColor1, // Colore specificato nel TextStyle
-                ),
-              ),
-              SizedBox(width: screenWidth * 0.02), // Spaziatura tra "LETTERA" e la lettera
-              // Lettera specifica
-              Text(
-                lettera,
-                style: TextStyle(
-                  fontSize: screenWidth * 0.048,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textColor3, // Colore specificato nel TextStyle
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
 }
-    }
