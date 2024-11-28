@@ -114,16 +114,24 @@ class ConsultazioneLettera extends StatelessWidget {
                     ],
                   ),
                 ),
-                   Spacer(),
+                Spacer(),
                 // Layout immagine placeholder con le frecce
                 Row(
                   children: [
+                    // Freccia sinistra
                     if (mostraFrecciaSinistra)
                       IconButton(
                         icon: Icon(Icons.arrow_back, color: AppColors.textColor1),
                         iconSize: 40,
                         onPressed: () {
-                          // Azione freccia sinistra
+                          // Navigazione alla lettera precedente
+                          String letteraPrecedente = String.fromCharCode(lettera.codeUnitAt(0) - 1);
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ConsultazioneLettera(lettera: letteraPrecedente),
+                            ),
+                          );
                         },
                       )
                     else
@@ -146,12 +154,20 @@ class ConsultazioneLettera extends StatelessWidget {
                         ),
                       ),
                     ),
+                    // Freccia destra
                     if (mostraFrecciaDestra)
                       IconButton(
                         icon: Icon(Icons.arrow_forward, color: AppColors.textColor1),
                         iconSize: 40,
                         onPressed: () {
-                          // Azione freccia destra
+                          // Navigazione alla lettera successiva
+                          String letteraSuccessiva = String.fromCharCode(lettera.codeUnitAt(0) + 1);
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ConsultazioneLettera(lettera: letteraSuccessiva),
+                            ),
+                          );
                         },
                       )
                     else
