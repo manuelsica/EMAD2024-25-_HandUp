@@ -102,37 +102,47 @@ class LeaderboardHomeScreen extends StatelessWidget {
               ),
 
               // Current Position
-              Container(
-                width: double.infinity,
-                margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.purple.shade900.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Column(
-                  children: [
-                    AppColors.gradientText(
-                      'Sei in posizione',
-                      screenWidth * 0.06,
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.purple.shade900.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(15),
                     ),
-                    Text(
-                      '120',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: screenWidth * 0.12,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: Column(
+                      children: [
+                        // AppColors.gradientText(
+                        //   'Sei in posizione',
+                        //   screenWidth * 0.06,
+                        // ),
+                        Text(
+                          '120',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: screenWidth * 0.12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  Positioned(
+                    top: 0,
+                    left: 36,
+                    child: AppColors.gradientText("Sei in posizione:", screenWidth * 0.06),
+                  ),
+                ],
               ),
 
               // Leaderboard Title
               Align(
                 alignment: Alignment.centerLeft,
                 child: Padding(
-                  padding: const EdgeInsets.all(12.0),
+                  padding: const EdgeInsets.all(10.0),
                   child: 
                   AppColors.gradientText("Classifica Generale:", screenWidth * 0.07)
                 ),
@@ -261,7 +271,7 @@ class LeaderboardHomeScreen extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  SizedBox(height: isFirst ? 25 : 17),
+                  SizedBox(height: isFirst ? 35 :  isSecond ? 25 :17),
                   AppColors.gradientText("Punti: " + points, screenWidth * 0.035),
                 ],
               ),

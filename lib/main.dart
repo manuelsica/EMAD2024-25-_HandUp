@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import "sidemenu.dart";
+import "game_screen_spelling.dart";
 import "app_colors.dart";
 import 'package:google_fonts/google_fonts.dart';
 
@@ -171,7 +172,12 @@ class HomeScreen extends StatelessWidget {
                                                     elevation: 0,
                                                     shadowColor: Colors.transparent,
                                                   ),
-                                                  onPressed: () {},
+                                                  onPressed: () {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(builder: (context) => const GameScreen()),
+                                                    );
+                                                  },
                                                   child: const Padding(
                                                       padding: EdgeInsets.symmetric(
                                                         horizontal: 15,

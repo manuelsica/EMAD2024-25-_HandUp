@@ -94,7 +94,7 @@ class GradientIconPainter extends CustomPainter {
     final paint = Paint()
       ..style = PaintingStyle.fill
       ..shader =
-          gradient.createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+          gradient.createShader(Rect.fromLTWH(0, 0, size.width + 10, size.height));
 
     final textPainter = TextPainter(
       text: TextSpan(
