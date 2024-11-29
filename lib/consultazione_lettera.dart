@@ -74,7 +74,7 @@ class ConsultazioneLettera extends StatelessWidget {
 
  // Mappa per le immagini dinamiche
   final Map<String, String> immaginiLettere = {
-    'A': 'assets/hand_icon.png',
+    'A': 'assets/letteraa.png',
     'B': 'assets/hand_icon.png',
     'C': 'assets/hand_icon.png',
     'D': 'assets/hand_icon.png',
