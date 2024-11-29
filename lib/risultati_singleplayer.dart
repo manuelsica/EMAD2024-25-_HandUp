@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-// import 'package:hand_up_interface/main.dart'; // Rimuovilo se non necessario
+import 'package:google_fonts/google_fonts.dart';
 import "sidemenu.dart";
 import "app_colors.dart";
-import 'package:google_fonts/google_fonts.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,7 +31,7 @@ class MyApp extends StatelessWidget {
 class RisultatiPartitaScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-     return Scaffold(
+    return Scaffold(
       drawer: SideMenu(),
       body: Stack(
         children: [
@@ -45,57 +44,6 @@ class RisultatiPartitaScreen extends StatelessWidget {
           SafeArea(
             child: Column(
               children: [
-                // Header con menu e profilo
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Builder(
-                        builder: (BuildContext context) {
-                          return IconButton(
-                            icon: Icon(Icons.menu, color: Colors.white),
-                            onPressed: () {
-                              Scaffold.of(context).openDrawer();
-                            },
-                          );
-                        },
-                      ),
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: Colors.purple,
-                            child: Text(
-                              'U',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                          SizedBox(width: 8),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Username',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              Text(
-                                '000 Punti',
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
                 // Corpo principale della schermata
                 Expanded(
                   child: Padding(
@@ -103,22 +51,17 @@ class RisultatiPartitaScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Titolo
-                        Text(
+                        // Titolo con gradiente
+                        AppColors.gradientText(
                           "Risultati della Partita",
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.roboto(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                          24, // Dimensione del font
                         ),
                         SizedBox(height: 30),
 
                         // InfoBox: Tempo di Gioco
                         InfoBox(
                           label: "Tempo Partita",
-                          value: "00:47",
+                          value: "01:00",
                           icon: Icons.hourglass_bottom,
                           color: Colors.pinkAccent,
                         ),
@@ -133,11 +76,11 @@ class RisultatiPartitaScreen extends StatelessWidget {
                         ),
                         SizedBox(height: 16),
 
-                        // Progressi
+                        // Progressi con gradiente
                         Container(
                           padding: EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: AppColors.textColor3,
+                            color: const Color.fromARGB(255, 66, 66, 80),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Column(
@@ -147,30 +90,41 @@ class RisultatiPartitaScreen extends StatelessWidget {
                                 children: [
                                   Icon(Icons.bar_chart, color: Colors.pinkAccent),
                                   SizedBox(width: 8),
-                                  Text(
-                                    "Progressi",
-                                    style: GoogleFonts.roboto(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
+                                  AppColors.gradientText(
+                                    "Progressi", // Testo a sinistra
+                                    18, // Dimensione del font
                                   ),
                                 ],
                               ),
                               SizedBox(height: 12),
-                              Text(
-                                "Punti Totali: 900 + 7 = 907",
-                                style: GoogleFonts.roboto(
-                                  fontSize: 16,
-                                  color: Colors.white70,
-                                ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  // Usa il gradiente per "Punti Totali"
+                                  AppColors.gradientText(
+                                    "Punti Totali:", // Testo a sinistra
+                                    20, // Dimensione del font
+                                  ),
+                                  AppColors.firstPlaceGradientText(
+                                    "900 + 7 = 907", // Testo a destra
+                                    20, // Dimensione del font
+                                  ),
+                                ],
                               ),
-                              Text(
-                                "Streak Consecutive: 5",
-                                style: GoogleFonts.roboto(
-                                  fontSize: 16,
-                                  color: Colors.white70,
-                                ),
+                              SizedBox(height: 12),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  // Usa il gradiente per "Streak Consecutive"
+                                  AppColors.gradientText(
+                                    "Streak Consecutive:", // Testo a sinistra
+                                    20, // Dimensione del font
+                                  ),
+                                  AppColors.firstPlaceGradientText(
+                                    "5", // Testo a destra
+                                    20, // Dimensione del font
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -178,28 +132,53 @@ class RisultatiPartitaScreen extends StatelessWidget {
 
                         Spacer(),
 
-                        // Pulsante "Gioca di Nuovo"
-                        Center(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.purple,
-                              padding: EdgeInsets.symmetric(vertical: 14, horizontal: 36),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
+                        // Pulsanti
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            // Pulsante "Gioca di Nuovo"
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.purple,
+                                padding: EdgeInsets.symmetric(vertical: 14, horizontal: 36),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                              onPressed: () {
+                                // Azione per il pulsante
+                              },
+                              child: Text(
+                                "Gioca di Nuovo",
+                                style: GoogleFonts.roboto(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
-                            onPressed: () {
-                              // Azione per il pulsante
-                            },
-                            child: Text(
-                              "Gioca di Nuovo",
-                              style: GoogleFonts.roboto(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                            // Pulsante "Torna alle Modalità"
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.containerBorderColor4,
+                                padding: EdgeInsets.symmetric(vertical: 14, horizontal: 36),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                              onPressed: () {
+                                // Azione per tornare alle modalità
+                              },
+                              child: Text(
+                                "Torna alle Modalità",
+                                style: GoogleFonts.roboto(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
-                          ),
+                          ],
                         ),
                         SizedBox(height: 20),
                       ],
@@ -235,7 +214,7 @@ class InfoBox extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-         color: AppColors.textColor3,
+        color: const Color.fromARGB(255, 66, 66, 80),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -245,22 +224,15 @@ class InfoBox extends StatelessWidget {
             children: [
               Icon(icon, color: color),
               SizedBox(width: 8),
-              Text(
-                label,
-                style: GoogleFonts.roboto(
-                  fontSize: 16,
-                  color: Colors.white70,
-                ),
+              AppColors.gradientText(
+                label, // Testo della label
+                16, // Dimensione del font
               ),
             ],
           ),
-          Text(
-            value,
-            style: GoogleFonts.roboto(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+          AppColors.gradientText(
+            value, // Testo del valore
+            18, // Dimensione del font
           ),
         ],
       ),
