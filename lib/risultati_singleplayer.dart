@@ -151,7 +151,7 @@ class RisultatiPartitaScreen extends StatelessWidget {
                               child: Text(
                                 "Gioca di Nuovo",
                                 style: GoogleFonts.poppins(
-                                  fontSize: 18,
+                                  fontSize: 15,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                 ),
@@ -172,7 +172,7 @@ class RisultatiPartitaScreen extends StatelessWidget {
                               child: Text(
                                 "Torna alle Modalità",
                                 style: GoogleFonts.poppins(
-                                  fontSize: 18,
+                                  fontSize: 15,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                 ),
