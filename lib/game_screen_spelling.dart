@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:camera/camera.dart';
+import 'package:hand_up_interface/risultati_singleplayer.dart';
 import "app_colors.dart";
 import 'package:google_fonts/google_fonts.dart';
-import "sidemenu.dart";
-
+import "sidemenu.dart"; // Import del menu laterale
 
 class GameScreen extends StatefulWidget {
   const GameScreen({Key? key}) : super(key: key);
@@ -28,13 +28,25 @@ class _GameScreenState extends State<GameScreen>
     _timerController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 60),
-    )..addListener(() {
+    )
+      ..addListener(() {
         setState(() {
           _progress = _timerController.value;
           int seconds = (_timerController.value * 60).floor();
           _timeString =
               "${(seconds ~/ 60).toString().padLeft(2, '0')}:${(seconds % 60).toString().padLeft(2, '0')}";
         });
+      })
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          // Quando il timer termina, naviga alla schermata dei risultati
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => RisultatiPartitaScreen(),
+            ),
+          );
+        }
       });
     _timerController.forward();
   }
@@ -182,7 +194,8 @@ class _GameScreenState extends State<GameScreen>
                           borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color.fromARGB(255, 233, 30, 196).withOpacity(0.8),
+                              color: const Color.fromARGB(255, 233, 30, 196)
+                                  .withOpacity(0.8),
                               blurRadius: 20,
                               spreadRadius: 4,
                               offset: const Offset(0, 0),
@@ -190,29 +203,37 @@ class _GameScreenState extends State<GameScreen>
                           ],
                         ),
                         child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.purple,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 15,
-                                vertical: 5,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              elevation: 0,
-                              shadowColor: Colors.transparent,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.purple,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 15,
+                              vertical: 5,
                             ),
-                            onPressed: () {},
-                            child: const Padding(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 15,
-                                  vertical: 8,
-                                ),
-                                child: const Text(
-                                  'Skip',
-                                ))),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            elevation: 0,
+                            shadowColor: Colors.transparent,
+                          ),
+                          onPressed: () {
+                            _timerController.stop();
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => RisultatiPartitaScreen(),
+                              ),
+                            );
+                          },
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 15,
+                              vertical: 8,
+                            ),
+                            child: Text('Skip'),
+                          ),
+                        ),
                       ),
-                    )
+                    ),
                   ],
                 ),
               ),
