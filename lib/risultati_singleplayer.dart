@@ -105,7 +105,7 @@ class RisultatiPartitaScreen extends StatelessWidget {
                                     "Punti Totali:", // Testo a sinistra
                                     20, // Dimensione del font
                                   ),
-                                  AppColors.firstPlaceGradientText(
+                                  AppColors.gradientText(
                                     "900 + 7 = 907", // Testo a destra
                                     20, // Dimensione del font
                                   ),
@@ -120,7 +120,7 @@ class RisultatiPartitaScreen extends StatelessWidget {
                                     "Streak Consecutive:", // Testo a sinistra
                                     20, // Dimensione del font
                                   ),
-                                  AppColors.firstPlaceGradientText(
+                                  AppColors.gradientText(
                                     "5", // Testo a destra
                                     20, // Dimensione del font
                                   ),
