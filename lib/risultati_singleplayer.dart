@@ -136,45 +136,52 @@ class RisultatiPartitaScreen extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            // Pulsante "Gioca di Nuovo"
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.purple,
-                                padding: EdgeInsets.symmetric(vertical: 14, horizontal: 36),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
+                            // Pulsante "Gioca di Nuovo" avvolto in Flexible
+                            Flexible(
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.purple,
+                                  padding: EdgeInsets.symmetric(vertical: 14, horizontal: 16), // Ridotto l'horizontal padding
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
                                 ),
-                              ),
-                              onPressed: () {
-                                // Azione per il pulsante
-                              },
-                              child: Text(
-                                "Gioca di Nuovo",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                onPressed: () {
+                                  // Azione per il pulsante
+                                },
+                                child: Text(
+                                  "Gioca di Nuovo",
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                  textAlign: TextAlign.center,
                                 ),
                               ),
                             ),
-                            // Pulsante "Torna alle Modalità"
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.containerBorderColor4,
-                                padding: EdgeInsets.symmetric(vertical: 14, horizontal: 36),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
+                            SizedBox(width: 16), // Spazio tra i pulsanti
+                            // Pulsante "Torna alle Modalità" avvolto in Flexible
+                            Flexible(
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.containerBorderColor4,
+                                  padding: EdgeInsets.symmetric(vertical: 14, horizontal: 16), // Ridotto l'horizontal padding
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
                                 ),
-                              ),
-                              onPressed: () {
-                                // Azione per tornare alle modalità
-                              },
-                              child: Text(
-                                "Torna alle Modalità",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                onPressed: () {
+                                  // Azione per tornare alle modalità
+                                },
+                                child: Text(
+                                  "Torna alle Modalità",
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                  textAlign: TextAlign.center,
                                 ),
                               ),
                             ),
