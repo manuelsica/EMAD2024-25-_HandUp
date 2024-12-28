@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import "package:flutter_svg/flutter_svg.dart";
 import "sidemenu.dart";
 import "game_screen_spelling.dart";
 import "app_colors.dart";
@@ -7,6 +8,7 @@ import "modalita_screen.dart";
 import 'package:google_fonts/google_fonts.dart';
 import 'login.dart';
 import 'registration.dart';
+import "intro_screen.dart";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -106,7 +108,7 @@ class LandingPageScreen extends StatelessWidget {
                       // Add navigation logic here
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const RegistrationScreen()),
+                        MaterialPageRoute(builder: (context) => const IntroScreen()),
                       );
                     },
                     child: Text(

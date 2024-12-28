@@ -5,6 +5,7 @@ import "app_colors.dart";
 import "multiplayer_home.dart";
 import "main.dart";
 import "classifiche.dart";
+import "home.dart";
 
 class SideMenu extends StatelessWidget {
   @override
@@ -28,22 +29,40 @@ class SideMenu extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.purple.shade800.withOpacity(0.5),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Stack(
                   children: [
-                    const CircleAvatar(
-                      radius: 30,
-                      backgroundColor: Colors.purple,
-                      child: Icon(Icons.person, size: 35, color: Colors.white),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const CircleAvatar(
+                          radius: 30,
+                          backgroundColor: Colors.purple,
+                          child:
+                              Icon(Icons.person, size: 35, color: Colors.white),
+                        ),
+                        const SizedBox(height: 10),
+                        const Text(
+                          'USERNAME',
+                          style: TextStyle(fontSize: 18, color: Colors.white),
+                        ),
+                        Text(
+                          'punti: 1000',
+                          style: TextStyle(color: Colors.grey[400]),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'USERNAME',
-                      style: TextStyle(fontSize: 18, color: Colors.white),
-                    ),
-                    Text(
-                      'punti: 1000',
-                      style: TextStyle(color: Colors.grey[400]),
+                    Positioned(
+                      top: 0,
+                      right: -10,
+                      child: IconButton(
+                        icon: Icon(Icons.logout, color: Colors.white),
+                        onPressed: () {
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(builder: (context) => MyApp()),
+                            (Route<dynamic> route) => false,
+                          );
+                        },
+                      ),
                     ),
                   ],
                 ),
@@ -54,7 +73,7 @@ class SideMenu extends StatelessWidget {
                     const Text('Home', style: TextStyle(color: Colors.white)),
                 onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => MyApp()),
+                  MaterialPageRoute(builder: (context) => HomeScreen()),
                 ),
               ),
               ListTile(
