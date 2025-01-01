@@ -4,6 +4,7 @@ import 'package:hand_up_interface/main.dart';
 import "sidemenu.dart";
 import "app_colors.dart";
 import 'package:google_fonts/google_fonts.dart';
+import "schermata_lobby.dart";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -481,7 +482,14 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                               elevation: 0,
                               shadowColor: Colors.transparent,
                             ),
-                            onPressed: _toggleContainer,
+                            onPressed: () {
+                              // Add navigation logic here
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => const LobbyScreen()),
+                              );
+                            },
                             child: const Padding(
                                 padding: EdgeInsets.symmetric(
                                   horizontal: 15,
