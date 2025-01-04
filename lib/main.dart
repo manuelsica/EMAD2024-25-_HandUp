@@ -26,12 +26,14 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: 'HandUp App', // Aggiungi un titolo per la tua app
       theme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: AppColors.backgroundColor,
         textTheme: GoogleFonts.poppinsTextTheme(),
       ),
       home: const LandingPageScreen(),
+      debugShowCheckedModeBanner: false, // Rimuove il debug banner
     );
   }
 }
@@ -41,6 +43,7 @@ class LandingPageScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Ottieni le dimensioni dello schermo
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
@@ -105,7 +108,7 @@ class LandingPageScreen extends StatelessWidget {
                       shadowColor: Colors.transparent,
                     ),
                     onPressed: () {
-                      // Add navigation logic here
+                      // Naviga alla schermata IntroScreen
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => const IntroScreen()),
@@ -134,6 +137,17 @@ class LandingPageScreen extends StatelessWidget {
                   );
                 },
                 child: AppColors.gradientText('Login', screenWidth * 0.04),
+              ),
+              
+              // Registrati Text Button
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const RegistrationScreen()),
+                  );
+                },
+                child: AppColors.gradientText('Registrati', screenWidth * 0.04),
               ),
               
             ],

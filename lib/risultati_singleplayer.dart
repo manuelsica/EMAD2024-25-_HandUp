@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import "sidemenu.dart";
 import "app_colors.dart";
+import 'modalita_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -147,7 +148,7 @@ class RisultatiPartitaScreen extends StatelessWidget {
                                   ),
                                 ),
                                 onPressed: () {
-                                  // Azione per il pulsante
+                                  // Azione per il pulsante "Gioca di Nuovo"
                                 },
                                 child: Text(
                                   "Gioca di Nuovo",
@@ -172,7 +173,10 @@ class RisultatiPartitaScreen extends StatelessWidget {
                                   ),
                                 ),
                                 onPressed: () {
-                                  // Azione per tornare alle modalità
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => ModalitaScreen()),
+                                  );
                                 },
                                 child: Text(
                                   "Torna alle Modalità",

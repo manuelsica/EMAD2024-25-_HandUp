@@ -32,7 +32,7 @@ class _GameScreenState extends State<GameScreen>
   DateTime _lastSent = DateTime.now(); // Ultimo invio
 
   final String serverURL =
-      "https://7b01-95-238-150-172.ngrok-free.app/predict/";
+      "https://2ddb-95-238-150-172.ngrok-free.app/predict/";
 
   // Variabili per la gestione delle parole e delle lettere
   int _currentWordIndex = 0; // Indice della parola corrente

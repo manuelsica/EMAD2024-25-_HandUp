@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:hand_up_interface/main.dart';
-import "sidemenu.dart";
-import "app_colors.dart";
+import 'sidemenu.dart';
+import 'app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
-import "schermata_lobby.dart";
+import 'schermata_lobby.dart';
+import 'login.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +31,7 @@ class MultiplayerHome extends StatelessWidget {
         textTheme: GoogleFonts.poppinsTextTheme(),
       ),
       home: const MultiplayerHomeScreen(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -47,6 +51,8 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
   String _lobbyType = 'Spelling';
   int _nrPlayers = 2;
 
+  final storage = const FlutterSecureStorage();
+
   @override
   void initState() {
     super.initState();
@@ -61,6 +67,21 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
       parent: _controller,
       curve: Curves.easeOut,
     ));
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAuthentication();
+    });
+  }
+
+  Future<void> _checkAuthentication() async {
+    final token = await storage.read(key: 'access_token');
+    if (token == null) {
+      // Reindirizza all'account di login
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+      );
+    }
   }
 
   @override
@@ -78,6 +99,63 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
         _controller.reverse();
       }
     });
+  }
+
+  // Funzione per generare le parole
+  Future<void> _generateWords(String modalita) async {
+    final token = await storage.read(key: 'access_token');
+    if (token == null) {
+      _showMessage('Non sei autenticato. Effettua il login.', isError: true);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+      );
+      return;
+    }
+
+    final url = Uri.parse('https://2ddb-95-238-150-172.ngrok-free.app/generate-words'); // Sostituisci con il tuo indirizzo server
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode({
+          'modalita': modalita,
+        }),
+      );
+
+      final responseData = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        final words = responseData['words'];
+        // Gestisci le parole generate
+        _showMessage('Parole generate: ${words.join(', ')}');
+      } else {
+        _showMessage(responseData['error'] ?? 'Errore durante la generazione delle parole.', isError: true);
+      }
+    } catch (error) {
+      _showMessage('Errore di connessione al server.', isError: true);
+    }
+  }
+
+  // Funzione per mostrare messaggi di dialogo
+  void _showMessage(String message, {bool isError = false}) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(isError ? 'Errore' : 'Successo'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () { Navigator.of(ctx).pop(); },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -228,12 +306,10 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                                             ),
                                             child: ElevatedButton(
                                               style: ElevatedButton.styleFrom(
-                                                backgroundColor:
-                                                    Colors.transparent,
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 15,
-                                                        vertical: 5),
+                                                backgroundColor: Colors.transparent,
+                                                padding: const EdgeInsets.symmetric(
+                                                    horizontal: 15,
+                                                    vertical: 5),
                                                 shape: RoundedRectangleBorder(
                                                   borderRadius:
                                                       BorderRadius.circular(30),
@@ -368,14 +444,14 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: DropdownButton<String>(
-                          // value: _lobbyType,
-                          hint: Text('Select Game Type'),
+                          value: _lobbyType,
+                          hint: const Text('Select Game Type'),
                           dropdownColor: Colors.purple.shade800,
-                          style: TextStyle(color: Colors.white),
+                          style: const TextStyle(color: Colors.white),
                           icon:
-                              Icon(Icons.arrow_drop_down, color: Colors.white),
+                              const Icon(Icons.arrow_drop_down, color: Colors.white),
                           isExpanded: true,
-                          underline: SizedBox(),
+                          underline: const SizedBox(),
                           menuMaxHeight: 200,
                           onChanged: (String? newValue) {
                             setState(() {
@@ -400,14 +476,14 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: DropdownButton<int>(
-                          // value: _nrPlayers,
-                          hint: Text('Select Number of Players'),
+                          value: _nrPlayers,
+                          hint: const Text('Select Number of Players'),
                           dropdownColor: Colors.purple.shade800,
-                          style: TextStyle(color: Colors.white),
+                          style: const TextStyle(color: Colors.white),
                           icon:
-                              Icon(Icons.arrow_drop_down, color: Colors.white),
+                              const Icon(Icons.arrow_drop_down, color: Colors.white),
                           isExpanded: true,
-                          underline: SizedBox(),
+                          underline: const SizedBox(),
                           menuMaxHeight: 200,
                           onChanged: (int? newValue) {
                             setState(() {
@@ -587,7 +663,13 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                       ))
               ],
             ),
-            onTap: () {},
+            onTap: () {
+              // Potrebbe essere necessario inviare il token per unirsi alla lobby
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const LobbyScreen()),
+              );
+            },
           ),
         ],
       ),
