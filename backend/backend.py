@@ -15,6 +15,9 @@ import random
 import string
 import re
 import google.generativeai as genai
+from supabase import create_client, Client
+import bcrypt  # Per l'hashing delle password
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 
 # Configura il logging
 logging.basicConfig(level=logging.INFO)
@@ -22,10 +25,20 @@ logger = logging.getLogger(__name__)
 
 # Configurazione Flask
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}}, allow_headers=["Content-Type", "Authorization"])
+
+# Configura la chiave segreta per JWT
+app.config['JWT_SECRET_KEY'] = 'V^8pZ4!kF#2sX@uJ9$L1mB&dR5eT3yC8oQ'  # Generata casualmente. Cambiala in produzione!
+jwt = JWTManager(app)
+
+# Configura le credenziali di Supabase
+SUPABASE_URL = "https://nrgzyxhkkuselsgbfzcq.supabase.co"  # Sostituisci con il tuo URL Supabase
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yZ3p5eGhra3VzZWxzZ2JmemNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5NDQ5MzIsImV4cCI6MjA1MTUyMDkzMn0.eX64nn7VpFqiPohWTRG_jk2sOPpsPMoKWxop5DN53-o"  # Sostituisci con la tua chiave API
+
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Configura la chiave API per Gemini e carica il modello generativo
-genai.configure(api_key="CHIAVE")
+genai.configure(api_key="AIzaSyBmBj9hWHwEZC0FTOMYJjrh2qfdUAP8XFU")  # Sostituisci con la tua chiave API Gemini
 generative_model = genai.GenerativeModel("gemini-1.5-flash")
 logger.info("Modello GenerativeModel di Gemini caricato con successo.")
 
@@ -119,6 +132,7 @@ def predict_with_tflite_model(processed_data):
 
 # Endpoint per predire la lettera dalla foto
 @app.route('/predict/', methods=['POST'])
+@jwt_required()
 def predict():
     try:
         data = request.get_json()
@@ -209,6 +223,7 @@ def genera_parole(modalita):
 
 # Endpoint per generare le parole
 @app.route('/generate-words', methods=['POST'])
+@jwt_required()
 def generate_words():
     try:
         data = request.get_json()
@@ -221,6 +236,106 @@ def generate_words():
     except Exception as e:
         logger.error(f"Errore nella generazione delle parole: {e}")
         return jsonify({"error": str(e)}), 500
+
+# Endpoint per la registrazione degli utenti
+@app.route('/register', methods=['POST'])
+def register():
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        email = data.get('email')
+        password = data.get('password')
+        confirm_password = data.get('confirm_password')
+
+        # Validazione dei campi
+        if not username or not email or not password or not confirm_password:
+            return jsonify({'error': 'Tutti i campi sono obbligatori.'}), 400
+
+        if password != confirm_password:
+            return jsonify({'error': 'Le password non corrispondono.'}), 400
+
+        # Validazione dell'email
+        email_regex = r"[^@]+@[^@]+\.[^@]+"
+        if not re.match(email_regex, email):
+            return jsonify({'error': 'Email non valida.'}), 400
+
+        # Controllo se l'email è già registrata
+        user = supabase.table('users').select('id').eq('email', email).execute()
+        if user.data and len(user.data) > 0:
+            return jsonify({'error': 'Email già registrata.'}), 400
+
+        # Hash della password
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+        # Inserimento del nuovo utente nel database
+        new_user = supabase.table('users').insert({
+            'username': username,
+            'email': email,
+            'password': hashed_password.decode('utf-8')
+        }).execute()
+
+        # Logga l'intero oggetto `new_user` per debug
+        logger.info(f"Risposta Supabase: {new_user}")
+
+        # Verifica se c'è stato un errore
+        if hasattr(new_user, 'error') and new_user.error is None:
+            return jsonify({'message': 'Registrazione avvenuta con successo.'}), 201
+        elif hasattr(new_user, 'status_code') and new_user.status_code in [200, 201]:
+            return jsonify({'message': 'Registrazione avvenuta con successo.'}), 201
+        elif hasattr(new_user, 'data') and new_user.data:
+            # Se `error` e `status_code` non sono disponibili, verifica se `data` contiene i dati dell'utente
+            return jsonify({'message': 'Registrazione avvenuta con successo.'}), 201
+        else:
+            logger.error(f"Errore durante l'inserimento dell'utente: {getattr(new_user, 'error', 'Errore sconosciuto')}")
+            return jsonify({'error': 'Errore durante la registrazione.'}), 500
+
+    except Exception as e:
+        logger.error(f"Errore nella registrazione: {e}")
+        return jsonify({'error': 'Errore interno del server.'}), 500
+
+# Endpoint per il login degli utenti
+@app.route('/login', methods=['POST'])
+def login():
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        password = data.get('password')
+
+        # Validazione dei campi
+        if not email or not password:
+            return jsonify({'error': 'Email e password sono obbligatorie.'}), 400
+
+        # Validazione dell'email
+        email_regex = r"[^@]+@[^@]+\.[^@]+"
+        if not re.match(email_regex, email):
+            return jsonify({'error': 'Email non valida.'}), 400
+
+        # Recupero dell'utente dal database
+        user_response = supabase.table('users').select('*').eq('email', email).execute()
+        logger.info(f"Risposta Supabase (login): {user_response}")
+
+        if not user_response.data or len(user_response.data) == 0:
+            return jsonify({'error': 'Email o password errate.'}), 401
+
+        user = user_response.data[0]
+        stored_hashed_password = user.get('password')
+
+        if not stored_hashed_password:
+            logger.error("Password non trovata per l'utente.")
+            return jsonify({'error': 'Errore durante il login.'}), 500
+
+        # Verifica della password
+        if not bcrypt.checkpw(password.encode('utf-8'), stored_hashed_password.encode('utf-8')):
+            return jsonify({'error': 'Email o password errate.'}), 401
+
+        # Creazione del token JWT
+        access_token = create_access_token(identity=user['id'])  # Usa un identificatore unico, ad esempio l'ID dell'utente
+
+        return jsonify({'message': 'Login effettuato con successo.', 'access_token': access_token}), 200
+
+    except Exception as e:
+        logger.error(f"Errore nel login: {e}")
+        return jsonify({'error': 'Errore interno del server.'}), 500
 
 # Esegui l'app Flask
 if __name__ == '__main__':
