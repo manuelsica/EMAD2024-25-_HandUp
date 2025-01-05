@@ -28,17 +28,17 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, allow_headers=["Content-Type", "Authorization"])
 
 # Configura la chiave segreta per JWT
-app.config['JWT_SECRET_KEY'] = 'V^8pZ4!kF#2sX@uJ9$L1mB&dR5eT3yC8oQ'  # Generata casualmente. Cambiala in produzione!
+app.config['JWT_SECRET_KEY'] = 'V^8pZ4!kF#2sX@uJ9$L1mB&dR5eT3yC8oQ' 
 jwt = JWTManager(app)
 
 # Configura le credenziali di Supabase
-SUPABASE_URL = "https://nrgzyxhkkuselsgbfzcq.supabase.co"  # Sostituisci con il tuo URL Supabase
+SUPABASE_URL = "https://nrgzyxhkkuselsgbfzcq.supabase.co"  
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yZ3p5eGhra3VzZWxzZ2JmemNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5NDQ5MzIsImV4cCI6MjA1MTUyMDkzMn0.eX64nn7VpFqiPohWTRG_jk2sOPpsPMoKWxop5DN53-o"  # Sostituisci con la tua chiave API
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Configura la chiave API per Gemini e carica il modello generativo
-genai.configure(api_key="AIzaSyBmBj9hWHwEZC0FTOMYJjrh2qfdUAP8XFU")  # Sostituisci con la tua chiave API Gemini
+genai.configure(api_key="CHIAVE")  # Sostituisci con la tua chiave API Gemini
 generative_model = genai.GenerativeModel("gemini-1.5-flash")
 logger.info("Modello GenerativeModel di Gemini caricato con successo.")
 
