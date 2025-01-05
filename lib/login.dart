@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import "backend_config.dart";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -101,7 +102,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
     // URL del tuo server Flask tramite ngrok
     final url = Uri.parse(
-        'https://2ddb-95-238-150-172.ngrok-free.app/login'); // Sostituisci con il tuo indirizzo server
+        // 'https://2ddb-95-238-150-172.ngrok-free.app/login'
+        BackendConfig.loginUrl
+        ); // Sostituisci con il tuo indirizzo server
 
     try {
       final response = await http.post(

@@ -5,6 +5,7 @@ import 'home.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import "backend_config.dart";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -104,7 +105,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     }
 
     // URL del tuo server Flask
-    final url = Uri.parse('https://2ddb-95-238-150-172.ngrok-free.app/register');  // Sostituisci con il tuo indirizzo server
+    final url = Uri.parse(
+      // 'https://2ddb-95-238-150-172.ngrok-free.app/register'
+      BackendConfig.registerUrl
+      );  // Sostituisci con il tuo indirizzo server
 
     try {
       final response = await http.post(

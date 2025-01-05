@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'game_screen_spelling.dart';
-import 'app_colors.dart'; 
+import 'app_colors.dart';
+import "backend_config.dart"; 
 
 class ModalitaScreen extends StatefulWidget {
   const ModalitaScreen({Key? key}) : super(key: key);
@@ -14,7 +15,9 @@ class ModalitaScreen extends StatefulWidget {
 class _ModalitaScreenState extends State<ModalitaScreen> {
   // Funzione per recuperare le parole dal server
   Future<List<String>> fetchWords(String difficulty) async {
-    const String apiUrl = "https://6d98-95-238-150-172.ngrok-free.app/generate-words"; // Sostituisci con l'indirizzo del tuo server
+    // const String apiUrl = "https://6d98-95-238-150-172.ngrok-free.app/generate-words"; // Sostituisci con l'indirizzo del tuo server
+    const String apiUrl = BackendConfig.wordsGenerationUrl; // Sostituisci con l'indirizzo del tuo server
+
     try {
       final response = await http.post(
         Uri.parse(apiUrl),

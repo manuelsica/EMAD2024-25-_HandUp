@@ -8,6 +8,7 @@ import 'login.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import "backend_config.dart";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -113,7 +114,8 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
       return;
     }
 
-    final url = Uri.parse('https://2ddb-95-238-150-172.ngrok-free.app/generate-words'); // Sostituisci con il tuo indirizzo server
+    // final url = Uri.parse('https://2ddb-95-238-150-172.ngrok-free.app/generate-words'); // Sostituisci con il tuo indirizzo server
+    final url = Uri.parse(BackendConfig.wordsGenerationUrl); // Sostituisci con il tuo indirizzo server
 
     try {
       final response = await http.post(
