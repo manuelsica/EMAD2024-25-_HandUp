@@ -101,7 +101,7 @@ class LeaderboardHomeScreen extends StatelessWidget {
                 ),
               ),
 
-              // Current Position
+              // Current User Position
               Stack(
                 clipBehavior: Clip.none,
                 children: [
@@ -115,10 +115,6 @@ class LeaderboardHomeScreen extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        // AppColors.gradientText(
-                        //   'Sei in posizione',
-                        //   screenWidth * 0.06,
-                        // ),
                         Text(
                           '120',
                           style: TextStyle(
@@ -213,7 +209,7 @@ class LeaderboardHomeScreen extends StatelessWidget {
       ),
     );
   }
-
+  //Build the single leaderboard item
   Widget _buildLeaderboardItem({
     required String position,
     required String username,
@@ -248,6 +244,7 @@ class LeaderboardHomeScreen extends StatelessWidget {
           child: Row(
             children: [
               SizedBox(width: avatarSize + 16),
+              //Visualizzazione posizione
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -268,6 +265,7 @@ class LeaderboardHomeScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              //Visualizzazione punti
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -278,6 +276,7 @@ class LeaderboardHomeScreen extends StatelessWidget {
             ],
           ),
         ),
+        //Display Avatar
         Positioned(
           top: isFirst ? 55 : 45,
           left: -5,
@@ -294,6 +293,7 @@ class LeaderboardHomeScreen extends StatelessWidget {
             ),
           ),
         ),
+        //Display Username
         Positioned(
           top: avatarSize / 2 - 11,
           left: isFirst ? avatarSize + 5 : avatarSize + 15,

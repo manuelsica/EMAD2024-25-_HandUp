@@ -37,6 +37,7 @@ class SideMenu extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
+            //Header della sidebar con icona utente, username e password
             DrawerHeader(
               decoration: BoxDecoration(
                 color: Colors.purple.shade800.withOpacity(0.5),
@@ -63,6 +64,7 @@ class SideMenu extends StatelessWidget {
                       ),
                     ],
                   ),
+                  //Icona per il logout
                   Positioned(
                     top: 0,
                     right: -10,
@@ -74,6 +76,7 @@ class SideMenu extends StatelessWidget {
                 ],
               ),
             ),
+            //Pulsante per tornare alla home
             ListTile(
               leading: const Icon(Icons.home, color: Colors.white),
               title:
@@ -83,6 +86,7 @@ class SideMenu extends StatelessWidget {
                 MaterialPageRoute(builder: (context) => HomeScreen()),
               ),
             ),
+            //Pulsante per accedere alla modalità multiplayer
             ListTile(
               leading: const Icon(Icons.sports_esports, color: Colors.white),
               title:
@@ -105,6 +109,7 @@ class SideMenu extends StatelessWidget {
                 }
               },
             ),
+            //Pulsante per accedere alle classifiche
             ListTile(
               leading: const Icon(Icons.star, color: Colors.white),
               title: const Text('Classifiche',
@@ -114,6 +119,7 @@ class SideMenu extends StatelessWidget {
                 MaterialPageRoute(builder: (context) => LeaderboardScreen()),
               ),
             ),
+            //Pulsante per accedere allo shop
             ListTile(
               leading: const Icon(Icons.store, color: Colors.white),
               title: const Text('Shop',
@@ -123,6 +129,7 @@ class SideMenu extends StatelessWidget {
                 MaterialPageRoute(builder: (context) => const MultiplayerHome()),
               ),
             ),
+            //Pulsante per accedere alla pagina di consultazione
             ListTile(
               leading: const Icon(Icons.menu_book, color: Colors.white),
               title: const Text('Consultazione',
@@ -132,6 +139,7 @@ class SideMenu extends StatelessWidget {
                 MaterialPageRoute(builder: (context) => Consultazione()),
               ),
             ),
+            //Pulsante per accedere alla pagina delle impostazioni
             ListTile(
               leading: const Icon(Icons.settings, color: Colors.white),
               title: const Text('Settings',

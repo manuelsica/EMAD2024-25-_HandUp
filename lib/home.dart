@@ -114,6 +114,7 @@ class HomeScreen extends StatelessWidget {
                               child: Stack(
                                 clipBehavior: Clip.none,
                                 children: [
+                                  //Icon
                                   Positioned(
                                     right: -screenWidth * 0.57,
                                     bottom: -screenHeight * 0.66,
@@ -123,6 +124,7 @@ class HomeScreen extends StatelessWidget {
                                       height: screenHeight * 1.5,
                                     ),
                                   ),
+                                  //Casual Play Title
                                   Padding(
                                     padding: const EdgeInsets.only(right: 0),
                                     child: Column(
@@ -137,6 +139,7 @@ class HomeScreen extends StatelessWidget {
                                               const EdgeInsets.only(right: 80),
                                           child: Column(
                                             children: [
+                                              //Descrizione
                                               Text(
                                                 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur imperdiet ex vel libero pharetra, vita a posuere purus egestas.',
                                                 style: TextStyle(
@@ -160,7 +163,9 @@ class HomeScreen extends StatelessWidget {
                                                       ),
                                                     ],
                                                   ),
+                                                  //Start game Button
                                                   child: ElevatedButton(
+                                                      //Neon Like Effect
                                                       style: ElevatedButton.styleFrom(
                                                         backgroundColor: Colors.pink,
                                                         padding:
@@ -253,15 +258,18 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
-
+  //Function for creating the others play modes
   Widget _buildMenuItem({
     required String title,
     required String imageUrl,
+    //To determine if is accessible or not
     bool isLocked = false,
+    //Points to unlock
     int points = 0,
     required double screenWidth,
     required double screenHeight,
   }) {
+    //Root Container
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -271,6 +279,7 @@ class HomeScreen extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
+          //Mode Icon
           Positioned(
             left: -screenWidth * 0.04,
             top: -screenHeight * 0.11,

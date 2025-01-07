@@ -29,6 +29,7 @@ class IntroScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Builder(builder: (BuildContext context) {
+                      //Icona della barra laterale
                       return IconButton(
                         icon: CustomPaint(
                           size: Size(24, 24),
@@ -42,6 +43,7 @@ class IntroScreen extends StatelessWidget {
                         },
                       );
                     }),
+                    //Avatar e Username
                     Row(
                       children: [
                         const CircleAvatar(
@@ -76,7 +78,7 @@ class IntroScreen extends StatelessWidget {
                 ),
               ),
 
-              // Content
+              // Blocco "Sblocca le funzionalità"
               Expanded(
                 child: SingleChildScrollView(
                   child: Padding(
@@ -110,6 +112,7 @@ class IntroScreen extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
+                                    //Testo con Shader Mask per gradiente
                                     ShaderMask(
                                       shaderCallback: (bounds) =>
                                         AppColors.textGradient.createShader(bounds),
@@ -123,6 +126,7 @@ class IntroScreen extends StatelessWidget {
                                       )
                                     ),
                                     SizedBox(height: 10),
+                                    //Blocco di testo
                                     Container(
                                       width: screenWidth * 0.55,
                                       child: Text(
@@ -136,6 +140,7 @@ class IntroScreen extends StatelessWidget {
                                   ],
                                 ),
                               ),
+                              //Immagine dei cubi
                               Positioned(
                                 right: -60,
                                 bottom: -20,
@@ -157,14 +162,14 @@ class IntroScreen extends StatelessWidget {
 
                         SizedBox(height: 30),
 
-                        // Sections
+                        // Sezioni delle varie categorie
                         _buildSection(
                           context,
                           'Vocali',
                           'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur imperdiet ex vel libero pharetra, vita e posuere purus egestas.',
                           screenWidth,
                         ),
-
+                        //Separatore per dare il giusto spazio tra sezioni
                         SizedBox(height: 20),
 
                         _buildSection(
@@ -183,6 +188,8 @@ class IntroScreen extends StatelessWidget {
                           screenWidth,
                         ),
                         SizedBox(height: 20),
+
+                        //Pulsante di Registrazione
                         Center(
                           child: Container(
                             width: screenWidth * 0.5,
@@ -255,7 +262,7 @@ class IntroScreen extends StatelessWidget {
       ),
     );
   }
-
+  //Funzione per la creazione di una sezione
   Widget _buildSection(BuildContext context, String title, String description,
       double screenWidth) {
     return Container(
@@ -267,18 +274,6 @@ class IntroScreen extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // ShaderMask(
-          //   shaderCallback: (bounds) =>
-          //       AppColors.textGradient.createShader(bounds),
-          //   child: Text(
-          //     title,
-          //     style: TextStyle(
-          //       color: Colors.white,
-          //       fontSize: screenWidth * 0.055,
-          //       fontWeight: FontWeight.bold,
-          //     ),
-          //   ),
-          // ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

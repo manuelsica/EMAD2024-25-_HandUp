@@ -91,6 +91,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
     super.dispose();
   }
 
+  //Funzione per la comparsa/scomparsa della sezione per la creazione della lobby
   void _toggleContainer() {
     setState(() {
       _isContainerVisible = !_isContainerVisible;
@@ -232,7 +233,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
                         children: [
-                          // Create Game Card
+                          // Sezione per la creazione di una lobby
                           Container(
                             height: screenHeight * 0.3,
                             width: screenWidth * 0.9,
@@ -248,6 +249,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                             child: Stack(
                               clipBehavior: Clip.none,
                               children: [
+                                //Immagine di presentazione
                                 Positioned(
                                   right: -screenWidth * 0.35,
                                   bottom: -screenHeight * 0.4,
@@ -306,6 +308,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                                                 ),
                                               ],
                                             ),
+                                            //Pulsante per la creazione della lobby con effetto neon
                                             child: ElevatedButton(
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: Colors.transparent,
@@ -339,6 +342,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                             ),
                           ),
                           const SizedBox(height: 20),
+                          //Sezione per le lobby esistenti
                           AppColors.gradientText("Unisciti ad una Partita", screenWidth * 0.07),
                           const SizedBox(height: 10),
 
@@ -386,6 +390,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
               ),
             ),
           ),
+          //Sezione per lo slide della sezione per la creazione della lobby
           SlideTransition(
             position: _offsetAnimation,
             child: Align(
@@ -405,6 +410,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      //Icona per chiudere lo slide up
                       Align(
                         alignment: Alignment.topRight,
                         child: Builder(builder: (BuildContext context) {
@@ -424,6 +430,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                       ),
                       AppColors.gradientText("Create Lobby", screenWidth * 0.07),
                       SizedBox(height: 20),
+                      //Campo di testo per il nome della lobby
                       TextField(
                         decoration: InputDecoration(
                           hintText: 'Enter lobby name',
@@ -438,6 +445,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                         style: TextStyle(color: Colors.white),
                       ),
                       SizedBox(height: 20),
+                      //Sezione per il dropdown per la selezione della modalità di gioco
                       Container(
                         padding:
                             EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -470,6 +478,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                         ),
                       ),                      
                       SizedBox(height: 20),
+                      //Sezione per il dropdown per la selezione del numero di giocatori
                       Container(
                         padding:
                             EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -501,6 +510,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                         ),
                       ),
                       SizedBox(height: 20),
+                      //Campo di testo per eventuale password
                       TextField(
                         decoration: InputDecoration(
                           hintText: 'Password (opzionale)',
@@ -516,6 +526,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                       ),
                       SizedBox(height: 20),
 
+                      //Pulsante per la creazione della lobby
                       Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(30),
@@ -589,7 +600,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
       ),
     );
   }
-
+  //Funzione per la creazione di sezioni per le lobby esistenti
   Widget _buildLobbyItem({
     required String title,
     required String players,
@@ -606,6 +617,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
       ),
       child: Stack(
         clipBehavior: Clip.none,
+        //Icona della lobby
         children: [
           Positioned(
             left: -screenWidth * 0.04,
@@ -618,8 +630,10 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
           ),
           ListTile(
             contentPadding: const EdgeInsets.fromLTRB(100, 10, 20, 10),
+            //Nome della lobby
             title: 
             AppColors.gradientText(title, screenWidth * 0.048),
+            //Numero di giocatori
             subtitle: Row(
               children: [
                 CustomPaint(
@@ -638,6 +652,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                 ),
               ],
             ),
+            //Proprietario della lobby
             trailing: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -656,6 +671,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                     fontSize: screenWidth * 0.035,
                   ),
                 ),
+                //Icona per mostrare se la lobby è privata o pubblica
                 if (isLocked)
                   CustomPaint(
                       size: Size(screenWidth * 0.035, screenWidth * 0.035),

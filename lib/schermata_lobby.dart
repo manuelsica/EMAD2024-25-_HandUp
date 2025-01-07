@@ -87,11 +87,6 @@ class LobbyScreen extends StatelessWidget {
                         gradient: AppColors.textGradient,
                       ),
                     ),
-                    // Icon(
-                    //   Icons.timer,
-                    //   color: AppColors.textColor1,
-                    //   size: screenWidth * 0.08,
-                    // ),
                     SizedBox(width: 30),
                     AppColors.gradientText(
                       'Lobby di USERNAME',
@@ -108,14 +103,11 @@ class LobbyScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(15),
                   color: Colors.purple.shade900.withOpacity(0.3),
-                  // border: Border.all(
-                  //   color: AppColors.textColor1.withOpacity(0.3),
-                  //   width: 2,
-                  // ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    //Invocazione di funcione per formattare le informazioni della lobby
                     _buildInfoRow('Nome:', 'LightingRound', screenWidth),
                     SizedBox(height: 10),
                     _buildInfoRow('Gioco:', 'Spelling', screenWidth),
@@ -151,6 +143,7 @@ class LobbyScreen extends StatelessWidget {
                 child: ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
+                    //Invocazione di funzione per formattare le info  dei partecipanti
                     _buildParticipantTile('PixelGuru', 'P', screenWidth),
                     SizedBox(height: 12),
                     _buildParticipantTile('StormyNight', 'S', screenWidth),
@@ -208,7 +201,7 @@ class LobbyScreen extends StatelessWidget {
       ),
     );
   }
-
+  //Funzione per formattare le informazioni della lobby
   Widget _buildInfoRow(String label, String value, double screenWidth) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -232,6 +225,7 @@ class LobbyScreen extends StatelessWidget {
     );
   }
 
+  //Funzione per formattare le informazioni dei partecipanti
   Widget _buildParticipantTile(
       String username, String avatar, double screenWidth) {
     return Container(
@@ -239,10 +233,6 @@ class LobbyScreen extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(15),
         color: Colors.purple.shade900.withOpacity(0.3),
-        // border: Border.all(
-        //   color: AppColors.textColor1.withOpacity(0.3),
-        //   width: 2,
-        // ),
       ),
       child: Row(
         children: [
