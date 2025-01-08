@@ -5,6 +5,7 @@ import "game_screen_spelling.dart";
 import "app_colors.dart";
 import "modalita_screen.dart";
 import 'package:google_fonts/google_fonts.dart';
+import "top_bar.dart";
 
 class Home extends StatelessWidget {
   const Home({Key? key}) : super(key: key);
@@ -49,54 +50,7 @@ class HomeScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       // App Bar
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Builder(builder: (BuildContext context) {
-                              return IconButton(
-                                icon: CustomPaint(
-                                  size: Size(24, 24),
-                                  painter: GradientIconPainter(
-                                    icon: Icons.menu,
-                                    gradient: AppColors.textGradient,
-                                  ),
-                                ),
-                                onPressed: () {
-                                  Scaffold.of(context).openDrawer();
-                                },
-                              );
-                            }),
-                            Row(
-                              children: [
-                                const CircleAvatar(
-                                  backgroundColor: Colors.purple,
-                                  child: Icon(Icons.person, color: Colors.white),
-                                ),
-                                const SizedBox(width: 8),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'USERNAME',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white),
-                                    ),
-                                    Text(
-                                      'punti: 1000',
-                                      style: TextStyle(
-                                          color: Colors.grey[400], fontSize: 12),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-
+                      TopBar(username: "USERNAME", points: 1000, showMenu: true, showUser: true),
                       // Main Content
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),

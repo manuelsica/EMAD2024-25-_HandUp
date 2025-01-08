@@ -9,6 +9,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import "backend_config.dart";
+import "top_bar.dart";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -178,55 +179,11 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
               child: Column(
                 children: [
                   // App Bar
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Builder(builder: (BuildContext context) {
-                          return IconButton(
-                            icon: CustomPaint(
-                              size: Size(24, 24),
-                              painter: GradientIconPainter(
-                                icon: Icons.menu,
-                                gradient: AppColors.textGradient,
-                              ),
-                            ),
-                            onPressed: () {
-                              Scaffold.of(context).openDrawer();
-                            },
-                          );
-                        }),
-                        const Row(
-                          children: [
-                            CircleAvatar(
-                              backgroundColor: Colors.purple,
-                              child: Text('U',
-                                  style: TextStyle(color: Colors.white)),
-                            ),
-                            SizedBox(width: 8),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Username',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white),
-                                ),
-                                Text(
-                                  '000 Punti',
-                                  style: TextStyle(
-                                      color: Colors.grey, fontSize: 12),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
+                  TopBar(
+                      username: "USERNAME",
+                      points: 1000,
+                      showMenu: true,
+                      showUser: true),
                   // Main Content
                   Expanded(
                     child: SingleChildScrollView(

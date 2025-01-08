@@ -10,6 +10,8 @@ import "app_colors.dart";
 import 'package:google_fonts/google_fonts.dart';
 import "sidemenu.dart"; // Import del menu laterale
 import 'package:hand_up_interface/risultati_singleplayer.dart';
+import "top_bar.dart";
+import "backend_config.dart";
 
 class GameScreen extends StatefulWidget {
   final List<String> words; // Lista di parole passate dal ModalitaScreen
@@ -31,8 +33,8 @@ class _GameScreenState extends State<GameScreen>
   bool _isProcessing = false; // Stato per prevenire richieste duplicate
   DateTime _lastSent = DateTime.now(); // Ultimo invio
 
-  final String serverURL =
-      "https://2ddb-95-238-150-172.ngrok-free.app/predict/";
+  final String serverURL = BackendConfig.predictUrl;
+      // "https://2ddb-95-238-150-172.ngrok-free.app/predict/";
 
   // Variabili per la gestione delle parole e delle lettere
   int _currentWordIndex = 0; // Indice della parola corrente

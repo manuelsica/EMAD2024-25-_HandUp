@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import "sidemenu.dart";
 import "app_colors.dart";
 import 'package:google_fonts/google_fonts.dart';
+import "top_bar.dart";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -113,10 +114,8 @@ class ConsultazioneLettera extends StatelessWidget {
     final screenHeight = MediaQuery.of(context).size.height;
     bool mostraFrecciaSinistra = lettera != 'A';
     bool mostraFrecciaDestra = lettera != 'Z';
-     String testoLettera = letterTexts[lettera] ?? 'Testo non disponibile per la lettera $lettera.';
-final String? immagineCorrente = immaginiLettere[lettera]; // Ottieni il percorso immagine dalla mappa
-
-   
+    String testoLettera = letterTexts[lettera] ?? 'Testo non disponibile per la lettera $lettera.';
+    final String? immagineCorrente = immaginiLettere[lettera]; // Ottieni il percorso immagine dalla mappa
     
     return Scaffold(
       drawer: SideMenu(),
@@ -130,56 +129,12 @@ final String? immagineCorrente = immaginiLettere[lettera]; // Ottieni il percors
           SafeArea(
             child: Column(
               children: [
-                // Header (rimasto invariato)
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Builder(
-                        builder: (BuildContext context) {
-                          return IconButton(
-                            icon: Icon(Icons.menu, color: Colors.white),
-                            onPressed: () {
-                              Scaffold.of(context).openDrawer();
-                            },
-                          );
-                        },
-                      ),
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: Colors.purple,
-                            child: Text(
-                              'U',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                          SizedBox(width: 8),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Username',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              Text(
-                                '000 Punti',
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+                // TopBar
+                TopBar(
+                    username: "USERNAME",
+                    points: 1000,
+                    showMenu: true,
+                    showUser: true),
                 Spacer(),
                 // Layout immagine con frecce
                 Row(

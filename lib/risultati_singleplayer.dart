@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import "sidemenu.dart";
 import "app_colors.dart";
 import 'modalita_screen.dart';
+import "top_bar.dart";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

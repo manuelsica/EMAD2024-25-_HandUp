@@ -4,6 +4,7 @@ import "sidemenu.dart";
 import "app_colors.dart";
 import 'package:google_fonts/google_fonts.dart';
 import "registration.dart";
+import "top_bar.dart";
 
 class IntroScreen extends StatelessWidget {
   const IntroScreen({Key? key}) : super(key: key);
@@ -23,61 +24,11 @@ class IntroScreen extends StatelessWidget {
           child: Column(
             children: [
               // App Bar
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Builder(builder: (BuildContext context) {
-                      //Icona della barra laterale
-                      return IconButton(
-                        icon: CustomPaint(
-                          size: Size(24, 24),
-                          painter: GradientIconPainter(
-                            icon: Icons.menu,
-                            gradient: AppColors.textGradient,
-                          ),
-                        ),
-                        onPressed: () {
-                          Scaffold.of(context).openDrawer();
-                        },
-                      );
-                    }),
-                    //Avatar e Username
-                    Row(
-                      children: [
-                        const CircleAvatar(
-                          backgroundColor: Colors.purple,
-                          child:
-                              Text('U', style: TextStyle(color: Colors.white)),
-                        ),
-                        const SizedBox(width: 8),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'USERNAME',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: screenWidth * 0.04,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              '000 Punti',
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: screenWidth * 0.035,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
+              TopBar(
+                  username: "USERNAME",
+                  points: 1000,
+                  showMenu: true,
+                  showUser: false),
               // Blocco "Sblocca le funzionalità"
               Expanded(
                 child: SingleChildScrollView(

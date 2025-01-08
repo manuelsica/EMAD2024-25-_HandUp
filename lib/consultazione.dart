@@ -6,6 +6,7 @@ import "app_colors.dart";
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:hand_up_interface/consultazione_lettera.dart';
+import "top_bar.dart";
 
 
 void main() {
@@ -96,55 +97,11 @@ class _ConsultazioneScreenState extends State<ConsultazioneScreen>
               child: Column(
                 children: [
                   // App Bar
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Builder(builder: (BuildContext context) {
-                          return IconButton(
-                            icon: CustomPaint(
-                              size: Size(24, 24),
-                              painter: GradientIconPainter(
-                                icon: Icons.menu,
-                                gradient: AppColors.textGradient,
-                              ),
-                            ),
-                            onPressed: () {
-                              Scaffold.of(context).openDrawer();
-                            },
-                          );
-                        }),
-                        const Row(
-                          children: [
-                            CircleAvatar(
-                              backgroundColor: Colors.purple,
-                              child: Text('U',
-                                  style: TextStyle(color: Colors.white)),
-                            ),
-                            SizedBox(width: 8),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Username',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white),
-                                ),
-                                Text(
-                                  '000 Punti',
-                                  style: TextStyle(
-                                      color: Colors.grey, fontSize: 12),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
+                  TopBar(
+                      username: "USERNAME",
+                      points: 1000,
+                      showMenu: true,
+                      showUser: true),
                   // Main Content
                   Expanded(
                     child: SingleChildScrollView(
