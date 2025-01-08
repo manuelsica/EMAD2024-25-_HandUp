@@ -174,10 +174,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
+      //App Bar
       appBar: AppBar(
         title: AppColors.gradientText('Login', screenWidth * 0.05),
         backgroundColor: AppColors.backgroundColor,
         elevation: 0,
+        //Back Button
         leading: IconButton(
           icon: CustomPaint(
             size: Size(45, 45),
