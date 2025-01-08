@@ -160,6 +160,24 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
+        appBar: AppBar(
+        title: AppColors.gradientText('Registrazione', screenWidth * 0.05),
+        backgroundColor: AppColors.backgroundColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: CustomPaint(
+            size: Size(45, 45),
+            painter: GradientIconPainter(
+              icon: Icons.arrow_back,
+              gradient: AppColors.textGradient,
+            ),
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Center(

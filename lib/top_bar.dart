@@ -26,6 +26,7 @@ class TopBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          //Icona del menu
           if (showMenu)
             Builder(builder: (BuildContext context) {
               return IconButton(
@@ -44,6 +45,7 @@ class TopBar extends StatelessWidget {
           else
             const SizedBox(width: 48),
 
+          //Informazioni Utente loggato
           if (showUser)
             Row(
               children: [

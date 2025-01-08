@@ -175,9 +175,21 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
       appBar: AppBar(
-        title: Text('Login', style: GoogleFonts.poppins()),
+        title: AppColors.gradientText('Login', screenWidth * 0.05),
         backgroundColor: AppColors.backgroundColor,
         elevation: 0,
+        leading: IconButton(
+          icon: CustomPaint(
+            size: Size(45, 45),
+            painter: GradientIconPainter(
+              icon: Icons.arrow_back,
+              gradient: AppColors.textGradient,
+            ),
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -187,7 +199,6 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 children: [
                   SizedBox(height: screenHeight * 0.02),
-
                   // Logo
                   Container(
                     margin: EdgeInsets.only(
