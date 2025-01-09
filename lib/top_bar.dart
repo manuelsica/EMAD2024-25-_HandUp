@@ -1,11 +1,12 @@
+// lib/top_bar.dart
 import 'package:flutter/material.dart';
 import "app_colors.dart";
 
 class TopBar extends StatelessWidget {
-  //Variabili per il contenuto della top bar
+  // Variabili per il contenuto della top bar
   final String username;
   final int points;
-  //Variabili per decidere se mostrare il menu e l'utente
+  // Variabili per decidere se mostrare il menu e l'utente
   final bool showMenu;
   final bool showUser;
 
@@ -15,7 +16,7 @@ class TopBar extends StatelessWidget {
     required this.points,
     required this.showMenu,
     required this.showUser,
-    }) : super(key: key);
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +27,7 @@ class TopBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          //Icona del menu
+          // Icona del menu
           if (showMenu)
             Builder(builder: (BuildContext context) {
               return IconButton(
@@ -45,7 +46,7 @@ class TopBar extends StatelessWidget {
           else
             const SizedBox(width: 48),
 
-          //Informazioni Utente loggato
+          // Informazioni Utente loggato
           if (showUser)
             Row(
               children: [
@@ -77,4 +78,3 @@ class TopBar extends StatelessWidget {
     );
   }
 }
-

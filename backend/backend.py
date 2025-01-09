@@ -1,3 +1,4 @@
+# server.py
 import eventlet
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -17,7 +18,10 @@ import re
 import google.generativeai as genai
 from supabase import create_client, Client
 import bcrypt  # Per l'hashing delle password
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import (
+    JWTManager, create_access_token, jwt_required, get_jwt_identity
+)
+from flask_socketio import SocketIO, emit, join_room, leave_room, disconnect
 
 # Configura il logging
 logging.basicConfig(level=logging.INFO)
@@ -28,17 +32,17 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, allow_headers=["Content-Type", "Authorization"])
 
 # Configura la chiave segreta per JWT
-app.config['JWT_SECRET_KEY'] = 'V^8pZ4!kF#2sX@uJ9$L1mB&dR5eT3yC8oQ' 
+app.config['JWT_SECRET_KEY'] = 'V^8pZ4!kF#2sX@uJ9$L1mB&dR5eT3yC8oQ'  # Sostituisci con una chiave segreta sicura
 jwt = JWTManager(app)
 
 # Configura le credenziali di Supabase
-SUPABASE_URL = "https://nrgzyxhkkuselsgbfzcq.supabase.co"  
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yZ3p5eGhra3VzZWxzZ2JmemNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5NDQ5MzIsImV4cCI6MjA1MTUyMDkzMn0.eX64nn7VpFqiPohWTRG_jk2sOPpsPMoKWxop5DN53-o"  # Sostituisci con la tua chiave API
+SUPABASE_URL = "https://nrgzyxhkkuselsgbfzcq.supabase.co"  # Sostituisci con il tuo URL Supabase
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yZ3p5eGhra3VzZWxzZ2JmemNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5NDQ5MzIsImV4cCI6MjA1MTUyMDkzMn0.eX64nn7VpFqiPohWTRG_jk2sOPpsPMoKWxop5DN53-o"  # Sostituisci con la tua chiave API Supabase
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Configura la chiave API per Gemini e carica il modello generativo
-genai.configure(api_key="CHIAVE")  # Sostituisci con la tua chiave API Gemini
+genai.configure(api_key="")  # Sostituisci con la tua chiave API Gemini
 generative_model = genai.GenerativeModel("gemini-1.5-flash")
 logger.info("Modello GenerativeModel di Gemini caricato con successo.")
 
@@ -129,6 +133,183 @@ def predict_with_tflite_model(processed_data):
     except Exception as e:
         logger.error(f"Errore nella predizione con modello TensorFlow Lite: {e}")
         return "", 0.0
+
+# Configura SocketIO
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+
+# Data structures per gestire le lobby (in memoria per semplicità)
+# In un'applicazione di produzione, considera di usare un database persistente
+lobbies = {}
+users_in_lobbies = {}
+
+# Helper per generare un ID univoco per le lobby
+def generate_lobby_id(length=6):
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+
+# Socket.IO Events
+@socketio.on('connect')
+@jwt_required()
+def handle_connect():
+    current_user_id = get_jwt_identity()
+    logger.info(f"Utente {current_user_id} connesso via SocketIO.")
+    emit('connected', {'message': 'Connesso al server SocketIO.'})
+    # Aggiungi l'utente alla lista di utenti connessi se necessario
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    logger.info("Un utente si è disconnesso.")
+    # Rimuovi l'utente dalla lista di utenti connessi e dalle lobby se necessario
+
+@socketio.on('create_lobby')
+@jwt_required()
+def handle_create_lobby(data):
+    try:
+        current_user_id = get_jwt_identity()
+        lobby_name = data.get('lobby_name')
+        lobby_type = data.get('type')
+        num_players = data.get('num_players')
+        password = data.get('password', None)
+
+        if not lobby_name or not lobby_type or not num_players:
+            emit('error', {'error': 'Campi mancanti per la creazione della lobby.'})
+            return
+
+        lobby_id = generate_lobby_id()
+        lobbies[lobby_id] = {
+            'id': lobby_id,
+            'name': lobby_name,
+            'type': lobby_type,
+            'num_players': num_players,
+            'current_players': 1,
+            'creator': current_user_id,
+            'is_locked': bool(password),
+            'password': password,
+            'players': [current_user_id],
+        }
+
+        join_room(lobby_id)
+        users_in_lobbies[current_user_id] = lobby_id
+
+        emit('lobby_created', {'lobby': lobbies[lobby_id]}, room=lobby_id)
+        emit('update_lobbies', {'lobbies': list(lobbies.values())}, broadcast=True)
+
+        logger.info(f"Lobby {lobby_id} creata da utente {current_user_id}.")
+    except Exception as e:
+        logger.error(f"Errore nella creazione della lobby: {e}")
+        emit('error', {'error': 'Errore nella creazione della lobby.'})
+
+@socketio.on('join_lobby')
+@jwt_required()
+def handle_join_lobby(data):
+    try:
+        current_user_id = get_jwt_identity()
+        lobby_id = data.get('lobby_id')
+        password = data.get('password', None)
+
+        if not lobby_id:
+            emit('error', {'error': 'ID della lobby mancante.'})
+            return
+
+        if lobby_id not in lobbies:
+            emit('error', {'error': 'Lobby non trovata.'})
+            return
+
+        lobby = lobbies[lobby_id]
+
+        if lobby['current_players'] >= lobby['num_players']:
+            emit('error', {'error': 'Lobby piena.'})
+            return
+
+        if lobby['is_locked']:
+            if not password or password != lobby['password']:
+                emit('error', {'error': 'Password della lobby errata.'})
+                return
+
+        # Aggiungi l'utente alla lobby
+        lobby['current_players'] += 1
+        lobby['players'].append(current_user_id)
+        join_room(lobby_id)
+        users_in_lobbies[current_user_id] = lobby_id
+
+        emit('joined_lobby', {'lobby': lobby}, room=lobby_id)
+        emit('player_joined', {'user_id': current_user_id}, room=lobby_id)
+        emit('update_lobbies', {'lobbies': list(lobbies.values())}, broadcast=True)
+
+        logger.info(f"Utente {current_user_id} si è unito alla lobby {lobby_id}.")
+    except Exception as e:
+        logger.error(f"Errore nell'unirsi alla lobby: {e}")
+        emit('error', {'error': 'Errore nell\'unirsi alla lobby.'})
+
+@socketio.on('leave_lobby')
+@jwt_required()
+def handle_leave_lobby(data):
+    try:
+        current_user_id = get_jwt_identity()
+        lobby_id = data.get('lobby_id')
+
+        if not lobby_id or lobby_id not in lobbies:
+            emit('error', {'error': 'Lobby non valida.'})
+            return
+
+        lobby = lobbies[lobby_id]
+
+        if current_user_id not in lobby['players']:
+            emit('error', {'error': 'Utente non parte della lobby.'})
+            return
+
+        # Rimuovi l'utente dalla lobby
+        lobby['current_players'] -= 1
+        lobby['players'].remove(current_user_id)
+        leave_room(lobby_id)
+        users_in_lobbies.pop(current_user_id, None)
+
+        emit('player_left', {'user_id': current_user_id}, room=lobby_id)
+        emit('update_lobbies', {'lobbies': list(lobbies.values())}, broadcast=True)
+
+        logger.info(f"Utente {current_user_id} ha lasciato la lobby {lobby_id}.")
+
+        # Se la lobby è vuota, rimuovila
+        if lobby['current_players'] == 0:
+            del lobbies[lobby_id]
+            emit('lobby_closed', {'lobby_id': lobby_id}, broadcast=True)
+            logger.info(f"Lobby {lobby_id} chiusa perché vuota.")
+    except Exception as e:
+        logger.error(f"Errore nel lasciare la lobby: {e}")
+        emit('error', {'error': 'Errore nel lasciare la lobby.'})
+
+@socketio.on('start_game')
+@jwt_required()
+def handle_start_game(data):
+    try:
+        current_user_id = get_jwt_identity()
+        lobby_id = data.get('lobby_id')
+
+        if not lobby_id or lobby_id not in lobbies:
+            emit('error', {'error': 'Lobby non valida.'})
+            return
+
+        lobby = lobbies[lobby_id]
+
+        if lobby['creator'] != current_user_id:
+            emit('error', {'error': 'Solo il creatore della lobby può avviare il gioco.'})
+            return
+
+        # Logica per avviare il gioco
+        # Puoi personalizzare questo evento in base alle tue necessità
+        emit('game_started', {'message': 'Il gioco è iniziato!'}, room=lobby_id)
+        logger.info(f"Il gioco nella lobby {lobby_id} è stato avviato dal creatore {current_user_id}.")
+    except Exception as e:
+        logger.error(f"Errore nell'avviare il gioco: {e}")
+        emit('error', {'error': 'Errore nell\'avviare il gioco.'})
+
+@socketio.on('get_lobbies')
+@jwt_required()
+def handle_get_lobbies():
+    try:
+        emit('update_lobbies', {'lobbies': list(lobbies.values())})
+    except Exception as e:
+        logger.error(f"Errore nel recuperare le lobby: {e}")
+        emit('error', {'error': 'Errore nel recuperare le lobby.'})
 
 # Endpoint per predire la lettera dalla foto
 @app.route('/predict/', methods=['POST'])
@@ -237,7 +418,6 @@ def generate_words():
         logger.error(f"Errore nella generazione delle parole: {e}")
         return jsonify({"error": str(e)}), 500
 
-# Endpoint per la registrazione degli utenti
 @app.route('/register', methods=['POST'])
 def register():
     try:
@@ -260,34 +440,38 @@ def register():
             return jsonify({'error': 'Email non valida.'}), 400
 
         # Controllo se l'email è già registrata
-        user = supabase.table('users').select('id').eq('email', email).execute()
-        if user.data and len(user.data) > 0:
+        existing_user = supabase.table('users').select('id').eq('email', email).execute()
+        if existing_user.data and len(existing_user.data) > 0:
             return jsonify({'error': 'Email già registrata.'}), 400
 
         # Hash della password
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
         # Inserimento del nuovo utente nel database
         new_user = supabase.table('users').insert({
             'username': username,
             'email': email,
-            'password': hashed_password.decode('utf-8')
+            'password': hashed_password,
+            'points': 0  # Punti iniziali
         }).execute()
 
-        # Logga l'intero oggetto `new_user` per debug
-        logger.info(f"Risposta Supabase: {new_user}")
+        # Controllo del successo dell'inserimento
+        if new_user.data and len(new_user.data) > 0:
+            # Creazione del token JWT
+            user_id = new_user.data[0].get('id')
+            access_token = create_access_token(identity=user_id)
+            username = new_user.data[0].get('username')
+            points = new_user.data[0].get('points', 0)
 
-        # Verifica se c'è stato un errore
-        if hasattr(new_user, 'error') and new_user.error is None:
-            return jsonify({'message': 'Registrazione avvenuta con successo.'}), 201
-        elif hasattr(new_user, 'status_code') and new_user.status_code in [200, 201]:
-            return jsonify({'message': 'Registrazione avvenuta con successo.'}), 201
-        elif hasattr(new_user, 'data') and new_user.data:
-            # Se `error` e `status_code` non sono disponibili, verifica se `data` contiene i dati dell'utente
-            return jsonify({'message': 'Registrazione avvenuta con successo.'}), 201
-        else:
-            logger.error(f"Errore durante l'inserimento dell'utente: {getattr(new_user, 'error', 'Errore sconosciuto')}")
-            return jsonify({'error': 'Errore durante la registrazione.'}), 500
+            return jsonify({
+                'message': 'Registrazione avvenuta con successo.',
+                'access_token': access_token,
+                'username': username,
+                'points': points
+            }), 201
+
+        logger.error("Errore durante l'inserimento dell'utente.")
+        return jsonify({'error': 'Errore durante la registrazione.'}), 500
 
     except Exception as e:
         logger.error(f"Errore nella registrazione: {e}")
@@ -331,12 +515,53 @@ def login():
         # Creazione del token JWT
         access_token = create_access_token(identity=user['id'])  # Usa un identificatore unico, ad esempio l'ID dell'utente
 
-        return jsonify({'message': 'Login effettuato con successo.', 'access_token': access_token}), 200
+        # Recupero di username e points
+        username = user.get('username', 'Username')
+        points = user.get('points', 0)
+
+        return jsonify({
+            'message': 'Login effettuato con successo.',
+            'access_token': access_token,
+            'username': username,
+            'points': points
+        }), 200
 
     except Exception as e:
         logger.error(f"Errore nel login: {e}")
         return jsonify({'error': 'Errore interno del server.'}), 500
 
-# Esegui l'app Flask
+# Endpoint per ottenere i dettagli dell'utente
+@app.route('/user', methods=['GET'])
+@jwt_required()
+def get_user():
+    try:
+        current_user_id = get_jwt_identity()
+        user_response = supabase.table('users').select('id', 'username', 'email', 'points').eq('id', current_user_id).execute()
+
+        if not user_response.data or len(user_response.data) == 0:
+            return jsonify({'error': 'Utente non trovato.'}), 404
+
+        user = user_response.data[0]
+        return jsonify({'user': user}), 200
+    except Exception as e:
+        logger.error(f"Errore nel recupero dell'utente: {e}")
+        return jsonify({'error': 'Errore interno del server.'}), 500
+
+# Endpoint per recuperare la lista delle lobby (HTTP fallback)
+@app.route('/lobbies', methods=['GET'])
+@jwt_required()
+def get_lobbies_http():
+    try:
+        return jsonify({'lobbies': list(lobbies.values())}), 200
+    except Exception as e:
+        logger.error(f"Errore nel recupero delle lobby: {e}")
+        return jsonify({'error': 'Errore interno del server.'}), 500
+
+# Funzione per inviare la lista delle lobby a tutti i client
+def broadcast_lobbies():
+    socketio.emit('update_lobbies', {'lobbies': list(lobbies.values())}, broadcast=True)
+
+# Esegui l'app Flask con SocketIO
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001)
+    logger.info("Avvio del server Flask con SocketIO...")
+    socketio.run(app, host='0.0.0.0', port=5001)

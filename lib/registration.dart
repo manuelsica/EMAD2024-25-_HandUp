@@ -1,3 +1,4 @@
+// lib/registration.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
@@ -6,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import "backend_config.dart";
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,6 +31,7 @@ class RegistrationPage extends StatelessWidget {
         textTheme: GoogleFonts.poppinsTextTheme(),
       ),
       home: const RegistrationScreen(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -46,6 +49,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final TextEditingController _emailController    = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
+
+  final FlutterSecureStorage storage = FlutterSecureStorage();
 
   bool _isLoading = false;
 
@@ -106,7 +111,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
     // URL del tuo server Flask
     final url = Uri.parse(
-      // 'https://2ddb-95-238-150-172.ngrok-free.app/register'
+      // 'https://1d22-95-238-150-172.ngrok-free.app/register'
       BackendConfig.registerUrl
       );  // Sostituisci con il tuo indirizzo server
 
@@ -122,15 +127,35 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         }),
       );
 
+      print('Status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
       final responseData = json.decode(response.body);
 
       if (response.statusCode == 201) {
-        _showMessage('Registrazione avvenuta con successo.');
-        // Naviga alla schermata Home o login
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const Home()),
-        );
+        // Salva i dati dell'utente
+        final accessToken = responseData['access_token'];
+        final points = responseData['points'] ?? 0;
+        final returnedUsername = responseData['username'] ?? username;
+
+        print('Access Token Received: $accessToken');
+        print('Username Received: $returnedUsername');
+        print('Points Received: $points');
+
+        if (accessToken != null) {
+          await storage.write(key: 'access_token', value: accessToken);
+          await storage.write(key: 'username', value: returnedUsername);
+          await storage.write(key: 'points', value: points.toString());
+
+          _showMessage('Registrazione avvenuta con successo.');
+          // Naviga alla schermata Home
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const Home()),
+          );
+        } else {
+          _showMessage('Token non ricevuto dal server.', isError: true);
+        }
       } else {
         _showMessage(responseData['error'] ?? 'Errore durante la registrazione.', isError: true);
       }
@@ -183,196 +208,199 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Logo
-                Container(
-                  margin: EdgeInsets.only(
-                    top: screenHeight * 0.08,
-                    bottom: screenHeight * 0.01,
-                  ),
-                  child: Image.asset(
-                    'assets/logo_handup.png',
-                    width: screenWidth * 1,
-                    height: screenHeight * 0.35,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      print('Error loading image: $error');
-                      return Icon(Icons.error, size: screenWidth * 0.8, color: Colors.red);
-                    },
-                  ),
-                ),
-
-                // Username TextField
-                Container(
-                  width: screenWidth * 0.8,
-                  margin: EdgeInsets.only(top: screenHeight * 0.02),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: TextField(
-                    controller: _usernameController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: 'Username',
-                      hintStyle: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
-                        fontSize: screenWidth * 0.04,
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 15,
-                      ),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Logo
+                  Container(
+                    margin: EdgeInsets.only(
+                      top: screenHeight * 0.08,
+                      bottom: screenHeight * 0.01,
+                    ),
+                    child: Image.asset(
+                      'assets/logo_handup.png',
+                      width: screenWidth * 1,
+                      height: screenHeight * 0.35,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        print('Error loading image: $error');
+                        return Icon(Icons.error, size: screenWidth * 0.8, color: Colors.red);
+                      },
                     ),
                   ),
-                ),
 
-                // Email TextField
-                Container(
-                  width: screenWidth * 0.8,
-                  margin: EdgeInsets.only(top: screenHeight * 0.02),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: TextField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: 'Email',
-                      hintStyle: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
-                        fontSize: screenWidth * 0.04,
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 15,
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Password TextField
-                Container(
-                  width: screenWidth * 0.8,
-                  margin: EdgeInsets.only(top: screenHeight * 0.02),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: TextField(
-                    controller: _passwordController,
-                    obscureText: true,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: 'Password',
-                      hintStyle: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
-                        fontSize: screenWidth * 0.04,
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 15,
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Confirm Password TextField
-                Container(
-                  width: screenWidth * 0.8,
-                  margin: EdgeInsets.only(top: screenHeight * 0.02),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: TextField(
-                    controller: _confirmPasswordController,
-                    obscureText: true,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: 'Conferma Password',
-                      hintStyle: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
-                        fontSize: screenWidth * 0.04,
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 15,
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Register Button
-                Container(
-                  margin: EdgeInsets.only(top: screenHeight * 0.025),
-                  width: screenWidth * 0.5,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.textColor1.withOpacity(0.5),
-                        blurRadius: 20,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: Container(
+                  // Username TextField
+                  Container(
+                    width: screenWidth * 0.8,
+                    margin: EdgeInsets.only(top: screenHeight * 0.02),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Color.fromARGB(110, 214, 57, 196),
-                          Color.fromARGB(110, 255, 0, 208),
-                          Color.fromARGB(110, 140, 53, 232)
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
+                      color: Colors.white.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(30),
                     ),
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: screenWidth * 0.1,
-                          vertical: screenHeight * 0.015,
+                    child: TextField(
+                      controller: _usernameController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'Username',
+                        hintStyle: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: screenWidth * 0.04,
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 15,
                         ),
-                        elevation: 0,
-                        shadowColor: Colors.transparent,
                       ),
-                      onPressed: _isLoading ? null : _register,
-                      child: _isLoading 
-                        ? SizedBox(
-                            width: screenWidth * 0.05,
-                            height: screenWidth * 0.05,
-                            child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                              strokeWidth: 2.0,
-                            ),
-                          )
-                        : Text(
-                            'Registrati',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: screenWidth * 0.045,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
                     ),
                   ),
-                ),
-              ],
+
+                  // Email TextField
+                  Container(
+                    width: screenWidth * 0.8,
+                    margin: EdgeInsets.only(top: screenHeight * 0.02),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: TextField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'Email',
+                        hintStyle: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: screenWidth * 0.04,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 15,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Password TextField
+                  Container(
+                    width: screenWidth * 0.8,
+                    margin: EdgeInsets.only(top: screenHeight * 0.02),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: TextField(
+                      controller: _passwordController,
+                      obscureText: true,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'Password',
+                        hintStyle: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: screenWidth * 0.04,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 15,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Confirm Password TextField
+                  Container(
+                    width: screenWidth * 0.8,
+                    margin: EdgeInsets.only(top: screenHeight * 0.02),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: TextField(
+                      controller: _confirmPasswordController,
+                      obscureText: true,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'Conferma Password',
+                        hintStyle: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: screenWidth * 0.04,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 15,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Register Button
+                  Container(
+                    margin: EdgeInsets.only(top: screenHeight * 0.025),
+                    width: screenWidth * 0.5,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.textColor1.withOpacity(0.5),
+                          blurRadius: 20,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Color.fromARGB(110, 214, 57, 196),
+                            Color.fromARGB(110, 255, 0, 208),
+                            Color.fromARGB(110, 140, 53, 232)
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: screenWidth * 0.1,
+                            vertical: screenHeight * 0.015,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          elevation: 0,
+                          shadowColor: Colors.transparent,
+                        ),
+                        onPressed: _isLoading ? null : _register,
+                        child: _isLoading 
+                          ? SizedBox(
+                              width: screenWidth * 0.05,
+                              height: screenWidth * 0.05,
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                strokeWidth: 2.0,
+                              ),
+                            )
+                          : Text(
+                              'Registrati',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: screenWidth * 0.045,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

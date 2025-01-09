@@ -1,3 +1,4 @@
+// lib/login.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
@@ -49,7 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  final storage = const FlutterSecureStorage();
+  final storage = FlutterSecureStorage(); // Rimosso 'const'
 
   bool _isLoading = false;
 
@@ -123,17 +124,26 @@ class _LoginScreenState extends State<LoginScreen> {
         final responseData = json.decode(response.body);
         if (responseData is Map<String, dynamic>) {
           final token = responseData['access_token'];
-          if (token != null) {
+          final username = responseData['username'];
+          final points = responseData['points'];
+
+          if (token != null && username != null && points != null) {
             await storage.write(
                 key: 'access_token', value: token); // Salva il token
+            await storage.write(key: 'username', value: username);
+            await storage.write(key: 'points', value: points.toString());
+
             _showMessage('Login effettuato con successo.');
+
             // Naviga alla schermata Home
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const Home()),
             );
           } else {
-            _showMessage('Token non ricevuto dal server.', isError: true);
+            _showMessage(
+                'Dati utente mancanti nella risposta del server.',
+                isError: true);
           }
         } else {
           _showMessage('Risposta del server non valida.', isError: true);
@@ -174,12 +184,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
-      //App Bar
+      // App Bar
       appBar: AppBar(
         title: AppColors.gradientText('Login', screenWidth * 0.05),
         backgroundColor: AppColors.backgroundColor,
         elevation: 0,
-        //Back Button
+        // Back Button
         leading: IconButton(
           icon: CustomPaint(
             size: Size(45, 45),
@@ -356,6 +366,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
-    );
-  }
-}
+        );
+      }
+    }

@@ -1,39 +1,45 @@
+// lib/multiplayer_home.dart
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'socket_service.dart';
+import 'lobby_provider.dart';
+import 'schermata_lobby.dart';
 import 'sidemenu.dart';
 import 'app_colors.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'schermata_lobby.dart';
-import 'login.dart';
+import 'top_bar.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import "backend_config.dart";
-import "top_bar.dart";
-
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]).then((_) {
-    runApp(const MultiplayerHome());
-  });
-}
 
 class MultiplayerHome extends StatelessWidget {
   const MultiplayerHome({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF0A0E21),
-        textTheme: GoogleFonts.poppinsTextTheme(),
+    return MultiProvider(
+      providers: [
+        // Fornisce l'istanza di SocketService
+        Provider<SocketService>(
+          create: (_) => SocketService(),
+          dispose: (_, socketService) => socketService.dispose(),
+        ),
+        // ProxyProvider per fornire LobbyProvider con accesso a SocketService
+        ChangeNotifierProxyProvider<SocketService, LobbyProvider>(
+          create: (context) => LobbyProvider(
+              socketService: Provider.of<SocketService>(context, listen: false)),
+          update: (context, socketService, previousLobbyProvider) =>
+              previousLobbyProvider ?? LobbyProvider(socketService: socketService),
+        ),
+        // Aggiungi altri provider qui se necessario
+      ],
+      child: MaterialApp(
+        theme: ThemeData(
+          brightness: Brightness.dark,
+          scaffoldBackgroundColor: AppColors.backgroundColor,
+          textTheme: GoogleFonts.poppinsTextTheme(),
+        ),
+        home: const MultiplayerHomeScreen(),
+        debugShowCheckedModeBanner: false,
       ),
-      home: const MultiplayerHomeScreen(),
-      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -52,8 +58,14 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
   bool _isContainerVisible = false;
   String _lobbyType = 'Spelling';
   int _nrPlayers = 2;
+  String _lobbyName = '';
+  String _password = '';
 
   final storage = const FlutterSecureStorage();
+  String _username = "Username"; // Valore di default
+  int _points = 0; // Valore di default
+
+  late SocketService socketService; // Variabile membro per SocketService
 
   @override
   void initState() {
@@ -69,30 +81,50 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
       parent: _controller,
       curve: Curves.easeOut,
     ));
-    
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkAuthentication();
+
+    // Accesso a SocketService e recupero dati utente
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      socketService = Provider.of<SocketService>(context, listen: false);
+      socketService.connect();
+      // Recupera i dati utente
+      await _fetchUserData();
     });
   }
 
-  Future<void> _checkAuthentication() async {
-    final token = await storage.read(key: 'access_token');
-    if (token == null) {
-      // Reindirizza all'account di login
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-      );
+  Future<void> _fetchUserData() async {
+    String? username = await storage.read(key: 'username');
+    String? pointsStr = await storage.read(key: 'points');
+
+    if (username != null) {
+      setState(() {
+        _username = username;
+      });
+    } else {
+      print('Username non trovato.');
+      // Gestisci l'assenza di username secondo la logica della tua app
+    }
+
+    if (pointsStr != null) {
+      int? points = int.tryParse(pointsStr);
+      if (points != null) {
+        setState(() {
+          _points = points;
+        });
+      }
+    } else {
+      print('Punti non trovati.');
+      // Gestisci l'assenza di punti secondo la logica della tua app
     }
   }
 
   @override
   void dispose() {
+    // Rimosso socketService.disconnect(); poiché il Provider gestisce il dispose
     _controller.dispose();
     super.dispose();
   }
 
-  //Funzione per la comparsa/scomparsa della sezione per la creazione della lobby
+  // Funzione per alternare la visibilità del container di creazione della lobby
   void _toggleContainer() {
     setState(() {
       _isContainerVisible = !_isContainerVisible;
@@ -104,47 +136,6 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
     });
   }
 
-  // Funzione per generare le parole
-  Future<void> _generateWords(String modalita) async {
-    final token = await storage.read(key: 'access_token');
-    if (token == null) {
-      _showMessage('Non sei autenticato. Effettua il login.', isError: true);
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-      );
-      return;
-    }
-
-    // final url = Uri.parse('https://2ddb-95-238-150-172.ngrok-free.app/generate-words'); // Sostituisci con il tuo indirizzo server
-    final url = Uri.parse(BackendConfig.wordsGenerationUrl); // Sostituisci con il tuo indirizzo server
-
-    try {
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: json.encode({
-          'modalita': modalita,
-        }),
-      );
-
-      final responseData = json.decode(response.body);
-
-      if (response.statusCode == 200) {
-        final words = responseData['words'];
-        // Gestisci le parole generate
-        _showMessage('Parole generate: ${words.join(', ')}');
-      } else {
-        _showMessage(responseData['error'] ?? 'Errore durante la generazione delle parole.', isError: true);
-      }
-    } catch (error) {
-      _showMessage('Errore di connessione al server.', isError: true);
-    }
-  }
-
   // Funzione per mostrare messaggi di dialogo
   void _showMessage(String message, {bool isError = false}) {
     showDialog(
@@ -154,11 +145,177 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
         content: Text(message),
         actions: [
           TextButton(
-            onPressed: () { Navigator.of(ctx).pop(); },
+            onPressed: () {
+              Navigator.of(ctx).pop();
+            },
             child: const Text('OK'),
           ),
         ],
       ),
+    );
+  }
+
+  // Funzione per creare una lobby
+  void _createLobby() async {
+    if (_lobbyName.isEmpty) {
+      _showMessage('Il nome della lobby è obbligatorio.', isError: true);
+      return;
+    }
+
+    // Recupera il nome utente corrente dal secure storage
+    String? username = await storage.read(key: 'username'); // Assicurati che 'username' sia memorizzato
+
+    if (username == null) {
+      _showMessage('Username non trovato. Effettua il login.', isError: true);
+      return;
+    }
+
+    Map<String, dynamic> lobbyData = {
+      'lobby_name': _lobbyName,
+      'type': _lobbyType,
+      'num_players': _nrPlayers,
+      'current_players': 1, // Supponendo che il creatore sia il primo giocatore
+      'creator': username,
+      'is_locked': _password.isNotEmpty,
+      'password': _password.isNotEmpty ? _password : null,
+    };
+
+    socketService.createLobby(lobbyData);
+    _toggleContainer();
+  }
+
+  // Funzione per unirsi a una lobby
+  void _joinLobby(String lobbyId, {String? password}) {
+    socketService.joinLobby(lobbyId, password: password);
+  }
+
+  // Funzione per aggiornare la lista delle lobby
+  void _refreshLobbies() {
+    socketService.getLobbies();
+  }
+
+  // Funzione per costruire un elemento della lista delle lobby
+  Widget _buildLobbyItem({
+    required String title,
+    required String players,
+    required String owner,
+    required double screenWidth,
+    required double screenHeight,
+    bool isLocked = false,
+    required String lobbyId,
+  }) {
+    return Consumer<LobbyProvider>(
+      builder: (context, lobbyProvider, child) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: AppColors.containerOpaqueColor,
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned(
+                left: -screenWidth * 0.04,
+                top: -screenHeight * 0.11,
+                child: Image.asset(
+                  "assets/swords_icon.png",
+                  width: screenWidth * 0.3,
+                  height: screenHeight * 0.3,
+                ),
+              ),
+              ListTile(
+                contentPadding: const EdgeInsets.fromLTRB(100, 10, 20, 10),
+                title: AppColors.gradientText(title, screenWidth * 0.048),
+                subtitle: Row(
+                  children: [
+                    CustomPaint(
+                      size: Size(screenWidth * 0.04, screenWidth * 0.04),
+                      painter: GradientIconPainter(
+                        icon: Icons.person,
+                        gradient: AppColors.textGradient,
+                      ),
+                    ),
+                    SizedBox(width: screenWidth * 0.01),
+                    Text(
+                      players,
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: screenWidth * 0.035,
+                      ),
+                    ),
+                  ],
+                ),
+                trailing: SizedBox( // Avvolto in SizedBox per limitare la larghezza
+                  width: screenWidth * 0.3, // Regola la larghezza secondo necessità
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min, // Impostato per evitare overflow
+                    children: [
+                      Text(
+                        'Owner:',
+                        style: TextStyle(
+                          color: Colors.grey[400],
+                          fontSize: screenWidth * 0.03,
+                        ),
+                      ),
+                      Text(
+                        owner,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: screenWidth * 0.035,
+                        ),
+                      ),
+                      if (isLocked)
+                        CustomPaint(
+                          size: Size(screenWidth * 0.035, screenWidth * 0.035),
+                          painter: GradientIconPainter(
+                            icon: Icons.lock,
+                            gradient: AppColors.textGradient,
+                          ),
+                        )
+                    ],
+                  ),
+                ),
+                onTap: () {
+                  // Mostra un dialogo per inserire la password se la lobby è protetta
+                  if (isLocked) {
+                    showDialog(
+                      context: context,
+                      builder: (ctx) {
+                        String inputPassword = '';
+                        return AlertDialog(
+                          title: const Text('Inserisci Password'),
+                          content: TextField(
+                            obscureText: true,
+                            onChanged: (value) {
+                              inputPassword = value;
+                            },
+                            decoration: const InputDecoration(
+                              hintText: 'Password',
+                            ),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                _joinLobby(lobbyId, password: inputPassword);
+                                Navigator.of(ctx).pop();
+                              },
+                              child: const Text('Unisciti'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  } else {
+                    _joinLobby(lobbyId);
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -178,168 +335,188 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
             child: SafeArea(
               child: Column(
                 children: [
-                  // App Bar
+                  // Barra superiore
                   TopBar(
-                      username: "USERNAME",
-                      points: 1000,
+                      username: _username, // Passa il nome utente reale
+                      points: _points, // Passa i punti reali
                       showMenu: true,
                       showUser: true),
-                  // Main Content
+                  // Contenuto principale
                   Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        children: [
-                          // Sezione per la creazione di una lobby
-                          Container(
-                            height: screenHeight * 0.3,
-                            width: screenWidth * 0.9,
-                            padding: const EdgeInsets.fromLTRB(20, 20, 60, 60),
-                            decoration: BoxDecoration(
-                              color: Colors.transparent,
-                              border: Border.all(
-                                color: AppColors.textColor2,
-                                width: 2,
-                              ),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                //Immagine di presentazione
-                                Positioned(
-                                  right: -screenWidth * 0.35,
-                                  bottom: -screenHeight * 0.4,
-                                  child: Image.asset(
-                                    'assets/hand_coin.png',
-                                    width: screenWidth * 0.9,
-                                    height: screenHeight * 0.9,
-                                  ),
+                    child: RefreshIndicator(
+                      onRefresh: () async {
+                        _refreshLobbies();
+                      },
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          children: [
+                            // Sezione per creare una lobby
+                            Container(
+                              height: screenHeight * 0.3,
+                              width: screenWidth * 0.9,
+                              padding:
+                                  const EdgeInsets.fromLTRB(20, 20, 60, 60),
+                              decoration: BoxDecoration(
+                                color: Colors.transparent,
+                                border: Border.all(
+                                  color: AppColors.textColor2,
+                                  width: 2,
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.all(0),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      AppColors.gradientText("Crea una partita", screenWidth * 0.07),
-                                      const SizedBox(height: 40),
-                                      Align(
-                                        alignment: Alignment.centerLeft,
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(30),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.pink
-                                                    .withOpacity(0.8),
-                                                blurRadius: 20,
-                                                spreadRadius: 4,
-                                                offset: const Offset(0, 0),
-                                              ),
-                                            ],
-                                          ),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  // Immagine di presentazione
+                                  Positioned(
+                                    right: -screenWidth * 0.35,
+                                    bottom: -screenHeight * 0.4,
+                                    child: Image.asset(
+                                      'assets/hand_coin.png',
+                                      width: screenWidth * 0.9,
+                                      height: screenHeight * 0.9,
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        AppColors.gradientText(
+                                            "Crea una partita",
+                                            screenWidth * 0.07),
+                                        const SizedBox(height: 40),
+                                        Align(
+                                          alignment: Alignment.centerLeft,
                                           child: Container(
                                             decoration: BoxDecoration(
-                                              gradient: LinearGradient(
-                                                colors: [
-                                                  Color.fromARGB(
-                                                      110, 214, 57, 196),
-                                                  Color.fromARGB(
-                                                      110, 255, 0, 208),
-                                                  Color.fromARGB(
-                                                      110, 140, 53, 232)
-                                                ],
-                                                begin: Alignment.topLeft,
-                                                end: Alignment.bottomRight,
-                                              ),
                                               borderRadius:
                                                   BorderRadius.circular(30),
                                               boxShadow: [
                                                 BoxShadow(
-                                                  color: Colors.transparent,
+                                                  color: Colors.pink
+                                                      .withOpacity(0.8),
                                                   blurRadius: 20,
                                                   spreadRadius: 4,
-                                                  offset: const Offset(0, 0),
+                                                  offset:
+                                                      const Offset(0, 0),
                                                 ),
                                               ],
                                             ),
-                                            //Pulsante per la creazione della lobby con effetto neon
-                                            child: ElevatedButton(
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: Colors.transparent,
-                                                padding: const EdgeInsets.symmetric(
-                                                    horizontal: 15,
-                                                    vertical: 5),
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(30),
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                  colors: [
+                                                    Color.fromARGB(
+                                                        110, 214, 57, 196),
+                                                    Color.fromARGB(
+                                                        110, 255, 0, 208),
+                                                    Color.fromARGB(
+                                                        110, 140, 53, 232)
+                                                  ],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
                                                 ),
-                                                elevation: 0,
-                                                shadowColor: Colors.transparent,
-                                              ),
-                                              onPressed: _toggleContainer,
-                                              child: const Padding(
-                                                  padding: EdgeInsets.symmetric(
-                                                    horizontal: 15,
-                                                    vertical: 8,
+                                                borderRadius:
+                                                    BorderRadius.circular(30),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.transparent,
+                                                    blurRadius: 20,
+                                                    spreadRadius: 4,
+                                                    offset:
+                                                        const Offset(0, 0),
                                                   ),
-                                                  child: Text(
-                                                    "Crea una Lobby",
-                                                  )),
+                                                ],
+                                              ),
+                                              // Bottone per creare una lobby con effetto neon
+                                              child: ElevatedButton(
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor:
+                                                      Colors.transparent,
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                          horizontal: 15,
+                                                          vertical: 5),
+                                                  shape:
+                                                      RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            30),
+                                                  ),
+                                                  elevation: 0,
+                                                  shadowColor:
+                                                      Colors.transparent,
+                                                ),
+                                                onPressed: _toggleContainer,
+                                                child: const Padding(
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                      horizontal: 15,
+                                                      vertical: 8,
+                                                    ),
+                                                    child: Text(
+                                                      "Crea una Lobby",
+                                                    )),
+                                              ),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 20),
-                          //Sezione per le lobby esistenti
-                          AppColors.gradientText("Unisciti ad una Partita", screenWidth * 0.07),
-                          const SizedBox(height: 10),
+                            const SizedBox(height: 20),
+                            // Sezione per unirsi a una partita
+                            AppColors.gradientText(
+                                "Unisciti ad una Partita", screenWidth * 0.07),
+                            const SizedBox(height: 10),
 
-                          // Lobby List
-                          _buildLobbyItem(
-                              title: 'Lobby #1',
-                              players: '1/4',
-                              owner: 'NexusDreamer',
-                              screenWidth: screenWidth,
-                              screenHeight: screenHeight),
-                          _buildLobbyItem(
-                              title: 'Lobby #2',
-                              players: '1/4',
-                              owner: 'LuminousEnigma',
-                              screenWidth: screenWidth,
-                              screenHeight: screenHeight,
-                              isLocked: true),
-                          _buildLobbyItem(
-                              title: 'Lobby #3',
-                              players: '3/4',
-                              owner: 'VortexScribe',
-                              screenWidth: screenWidth,
-                              screenHeight: screenHeight),
-                          _buildLobbyItem(
-                              title: 'Lobby #4',
-                              players: '3/4',
-                              owner: 'StellarVoyage',
-                              screenWidth: screenWidth,
-                              screenHeight: screenHeight,
-                              isLocked: true),
-                          _buildLobbyItem(
-                              title: 'Lobby #5',
-                              players: '2/4',
-                              owner: 'Voyage',
-                              screenWidth: screenWidth,
-                              screenHeight: screenHeight,
-                              isLocked: true),
-                          // Back Button
-                          const SizedBox(height: 20),
-                        ],
+                            // Lista dinamica delle lobby
+                            Consumer<LobbyProvider>(
+                              builder: (context, lobbyProvider, child) {
+                                if (lobbyProvider.lobbies.isEmpty) {
+                                  return Center(
+                                    child: Text(
+                                      'Nessuna lobby disponibile. Crea una nuova lobby!',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: screenWidth * 0.05,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  );
+                                }
+
+                                return ListView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: lobbyProvider.lobbies.length,
+                                  itemBuilder: (context, index) {
+                                    var lobby = lobbyProvider.lobbies[index];
+                                    return _buildLobbyItem(
+                                      title: lobby.lobbyName,
+                                      players:
+                                          '${lobby.currentPlayers}/${lobby.numPlayers}',
+                                      owner:
+                                          lobby.creator, // Assicurati che 'creator' sia l'username
+                                      screenWidth: screenWidth,
+                                      screenHeight: screenHeight,
+                                      isLocked: lobby.isLocked,
+                                      lobbyId: lobby.lobbyId,
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                            // Bottone Indietro (se necessario)
+                            const SizedBox(height: 20),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -347,7 +524,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
               ),
             ),
           ),
-          //Sezione per lo slide della sezione per la creazione della lobby
+          // Sezione slide-up per creare una lobby
           SlideTransition(
             position: _offsetAnimation,
             child: Align(
@@ -364,16 +541,16 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                 ),
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      //Icona per chiudere lo slide up
-                      Align(
-                        alignment: Alignment.topRight,
-                        child: Builder(builder: (BuildContext context) {
-                          return IconButton(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Icona per chiudere la sezione slide-up
+                        Align(
+                          alignment: Alignment.topRight,
+                          child: IconButton(
                             icon: CustomPaint(
-                              size: Size(24, 24),
+                              size: const Size(24, 24),
                               painter: GradientIconPainter(
                                 icon: Icons.close,
                                 gradient: AppColors.textGradient,
@@ -382,272 +559,192 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                             onPressed: () {
                               _toggleContainer();
                             },
-                          );
-                        }),
-                      ),
-                      AppColors.gradientText("Create Lobby", screenWidth * 0.07),
-                      SizedBox(height: 20),
-                      //Campo di testo per il nome della lobby
-                      TextField(
-                        decoration: InputDecoration(
-                          hintText: 'Enter lobby name',
-                          hintStyle: TextStyle(color: Colors.white70),
-                          filled: true,
-                          fillColor: Colors.purple.shade800,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide.none,
                           ),
                         ),
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      SizedBox(height: 20),
-                      //Sezione per il dropdown per la selezione della modalità di gioco
-                      Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.purple.shade800,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: DropdownButton<String>(
-                          value: _lobbyType,
-                          hint: const Text('Select Game Type'),
-                          dropdownColor: Colors.purple.shade800,
-                          style: const TextStyle(color: Colors.white),
-                          icon:
-                              const Icon(Icons.arrow_drop_down, color: Colors.white),
-                          isExpanded: true,
-                          underline: const SizedBox(),
-                          menuMaxHeight: 200,
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              _lobbyType = newValue!;
-                            });
-                          },
-                          items: <String>["Spelling", "Matematica", "Scarabeo", "Impiccato"]
-                              .map<DropdownMenuItem<String>>((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
-                        ),
-                      ),                      
-                      SizedBox(height: 20),
-                      //Sezione per il dropdown per la selezione del numero di giocatori
-                      Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.purple.shade800,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: DropdownButton<int>(
-                          value: _nrPlayers,
-                          hint: const Text('Select Number of Players'),
-                          dropdownColor: Colors.purple.shade800,
-                          style: const TextStyle(color: Colors.white),
-                          icon:
-                              const Icon(Icons.arrow_drop_down, color: Colors.white),
-                          isExpanded: true,
-                          underline: const SizedBox(),
-                          menuMaxHeight: 200,
-                          onChanged: (int? newValue) {
-                            setState(() {
-                              _nrPlayers = newValue!;
-                            });
-                          },
-                          items: <int>[ 2, 3, 4].map<DropdownMenuItem<int>>((int value) {
-                            return DropdownMenuItem<int>(
-                              value: value,
-                              child: Text(value.toString()),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                      SizedBox(height: 20),
-                      //Campo di testo per eventuale password
-                      TextField(
-                        decoration: InputDecoration(
-                          hintText: 'Password (opzionale)',
-                          hintStyle: TextStyle(color: Colors.white70),
-                          filled: true,
-                          fillColor: Colors.purple.shade800,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      SizedBox(height: 20),
-
-                      //Pulsante per la creazione della lobby
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(30),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.pink.withOpacity(0.8),
-                              blurRadius: 20,
-                              spreadRadius: 4,
-                              offset: const Offset(0, 0),
+                        AppColors.gradientText(
+                            "Crea Lobby", screenWidth * 0.07),
+                        SizedBox(height: 20),
+                        // Campo di testo per il nome della lobby
+                        TextField(
+                          decoration: InputDecoration(
+                            hintText: 'Nome della lobby',
+                            hintStyle: TextStyle(color: Colors.white70),
+                            filled: true,
+                            fillColor: Colors.purple.shade800,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none,
                             ),
-                          ],
+                          ),
+                          style: TextStyle(color: Colors.white),
+                          onChanged: (value) {
+                            _lobbyName = value;
+                          },
                         ),
-                        child: Container(
+                        SizedBox(height: 20),
+                        // Dropdown per selezionare la modalità di gioco
+                        Container(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Color.fromARGB(110, 214, 57, 196),
-                                Color.fromARGB(110, 255, 0, 208),
-                                Color.fromARGB(110, 140, 53, 232)
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                            color: Colors.purple.shade800,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: DropdownButton<String>(
+                            value: _lobbyType,
+                            hint: const Text(
+                              'Seleziona Modalità di Gioco',
+                              style: TextStyle(color: Colors.white),
                             ),
+                            dropdownColor: Colors.purple.shade800,
+                            style: const TextStyle(color: Colors.white),
+                            icon: const Icon(Icons.arrow_drop_down,
+                                color: Colors.white),
+                            isExpanded: true,
+                            underline: const SizedBox(),
+                            menuMaxHeight: 200,
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                _lobbyType = newValue!;
+                              });
+                            },
+                            items: <String>[
+                              "Spelling",
+                              "Matematica",
+                              "Scarabeo",
+                              "Impiccato"
+                            ].map<DropdownMenuItem<String>>((String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                        SizedBox(height: 20),
+                        // Dropdown per selezionare il numero di giocatori
+                        Container(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.purple.shade800,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: DropdownButton<int>(
+                            value: _nrPlayers,
+                            hint: const Text(
+                              'Seleziona Numero di Giocatori',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            dropdownColor: Colors.purple.shade800,
+                            style: const TextStyle(color: Colors.white),
+                            icon: const Icon(Icons.arrow_drop_down,
+                                color: Colors.white),
+                            isExpanded: true,
+                            underline: const SizedBox(),
+                            menuMaxHeight: 200,
+                            onChanged: (int? newValue) {
+                              setState(() {
+                                _nrPlayers = newValue!;
+                              });
+                            },
+                            items: <int>[2, 3, 4]
+                                .map<DropdownMenuItem<int>>((int value) {
+                              return DropdownMenuItem<int>(
+                                value: value,
+                                child: Text(value.toString()),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                        SizedBox(height: 20),
+                        // Campo di testo per la password opzionale
+                        TextField(
+                          decoration: InputDecoration(
+                            hintText: 'Password (opzionale)',
+                            hintStyle: TextStyle(color: Colors.white70),
+                            filled: true,
+                            fillColor: Colors.purple.shade800,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                          style: TextStyle(color: Colors.white),
+                          onChanged: (value) {
+                            _password = value;
+                          },
+                        ),
+                        SizedBox(height: 20),
+
+                        // Bottone per creare la lobby
+                        Container(
+                          decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(30),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.transparent,
+                                color: Colors.pink.withOpacity(0.8),
                                 blurRadius: 20,
                                 spreadRadius: 4,
                                 offset: const Offset(0, 0),
                               ),
                             ],
                           ),
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 15, vertical: 5),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Color.fromARGB(110, 214, 57, 196),
+                                  Color.fromARGB(110, 255, 0, 208),
+                                  Color.fromARGB(110, 140, 53, 232)
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
                               ),
-                              elevation: 0,
-                              shadowColor: Colors.transparent,
-                            ),
-                            onPressed: () {
-                              // Add navigation logic here
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => const LobbyScreen()),
-                              );
-                            },
-                            child: const Padding(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 15,
-                                  vertical: 8,
+                              borderRadius: BorderRadius.circular(30),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.transparent,
+                                  blurRadius: 20,
+                                  spreadRadius: 4,
+                                  offset: const Offset(0, 0),
                                 ),
-                                child: Text(
-                                  "Crea",
-                                )),
+                              ],
+                            ),
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                foregroundColor:
+                                    Colors.white, // Imposta il colore del testo
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 15, vertical: 5),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                elevation: 0,
+                                shadowColor: Colors.transparent,
+                              ),
+                              onPressed: _createLobby,
+                              child: const Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 15,
+                                    vertical: 8,
+                                  ),
+                                  child: Text(
+                                    "Crea",
+                                  )),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
+          )
+            ],
           ),
-        ],
-      ),
-    );
-  }
-  //Funzione per la creazione di sezioni per le lobby esistenti
-  Widget _buildLobbyItem({
-    required String title,
-    required String players,
-    required String owner,
-    required double screenWidth,
-    required double screenHeight,
-    bool isLocked = false,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: AppColors.containerOpaqueColor,
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Stack(
-        clipBehavior: Clip.none,
-        //Icona della lobby
-        children: [
-          Positioned(
-            left: -screenWidth * 0.04,
-            top: -screenHeight * 0.11,
-            child: Image.asset(
-              "assets/swords_icon.png",
-              width: screenWidth * 0.3,
-              height: screenHeight * 0.3,
-            ),
-          ),
-          ListTile(
-            contentPadding: const EdgeInsets.fromLTRB(100, 10, 20, 10),
-            //Nome della lobby
-            title: 
-            AppColors.gradientText(title, screenWidth * 0.048),
-            //Numero di giocatori
-            subtitle: Row(
-              children: [
-                CustomPaint(
-                    size: Size(screenWidth * 0.04, screenWidth * 0.04),
-                    painter: GradientIconPainter(
-                      icon: Icons.person,
-                      gradient: AppColors.textGradient,
-                    )),
-                SizedBox(width: screenWidth * 0.01),
-                Text(
-                  players,
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: screenWidth * 0.035,
-                  ),
-                ),
-              ],
-            ),
-            //Proprietario della lobby
-            trailing: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Owner:',
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: screenWidth * 0.03,
-                  ),
-                ),
-                Text(
-                  owner,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: screenWidth * 0.035,
-                  ),
-                ),
-                //Icona per mostrare se la lobby è privata o pubblica
-                if (isLocked)
-                  CustomPaint(
-                      size: Size(screenWidth * 0.035, screenWidth * 0.035),
-                      painter: GradientIconPainter(
-                        icon: Icons.lock,
-                        gradient: AppColors.textGradient,
-                      ))
-              ],
-            ),
-            onTap: () {
-              // Potrebbe essere necessario inviare il token per unirsi alla lobby
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const LobbyScreen()),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
+        );
+      }
+    }
