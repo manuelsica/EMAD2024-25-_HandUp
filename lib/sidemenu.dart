@@ -7,6 +7,7 @@ import "classifiche.dart";
 import "home.dart";
 import 'login.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import "shop_screen.dart";
 
 class SideMenu extends StatefulWidget {
   SideMenu({Key? key}) : super(key: key);
@@ -163,7 +164,7 @@ class _SideMenuState extends State<SideMenu> {
               title: const Text('Shop', style: TextStyle(color: Colors.white)),
               onTap: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const MultiplayerHome()),
+                MaterialPageRoute(builder: (context) => const ShopScreen()),
               ),
             ),
             // Pulsante per accedere alla pagina di consultazione

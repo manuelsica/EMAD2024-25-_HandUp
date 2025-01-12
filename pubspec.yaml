@@ -92,6 +92,11 @@ flutter:
     - assets/hand_coin.png
     - assets/logo_handup.png
     - assets/alphabet_cubes.png
+    - assets/carrello.png
+    - assets/impiccato.png
+    - assets/matematica.png
+    - assets/scarabeo.png
+    - assets/ads.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
