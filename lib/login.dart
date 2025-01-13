@@ -46,15 +46,13 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  // Controller per i campi di testo
-  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _emailController    = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  final storage = FlutterSecureStorage(); // Rimosso 'const'
+  final storage = FlutterSecureStorage(); 
 
   bool _isLoading = false;
 
-  // Funzione per mostrare messaggi di dialogo
   void _showMessage(String message, {bool isError = false}) {
     showDialog(
       context: context,
@@ -73,39 +71,26 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // Funzione per effettuare il login
   Future<void> _login() async {
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
-    // Validazione dei campi
     if (email.isEmpty || password.isEmpty) {
       _showMessage('Per favore, inserisci email e password.', isError: true);
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
       return;
     }
 
-    // Validazione dell'email
     final emailRegex = RegExp(r"[^@]+@[^@]+\.[^@]+");
     if (!emailRegex.hasMatch(email)) {
       _showMessage('Email non valida.', isError: true);
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
       return;
     }
 
-    // URL del tuo server Flask tramite ngrok
-    final url = Uri.parse(
-        // 'https://2ddb-95-238-150-172.ngrok-free.app/login'
-        BackendConfig.loginUrl
-        ); // Sostituisci con il tuo indirizzo server
+    final url = Uri.parse(BackendConfig.loginUrl);
 
     try {
       final response = await http.post(
@@ -123,27 +108,26 @@ class _LoginScreenState extends State<LoginScreen> {
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         if (responseData is Map<String, dynamic>) {
-          final token = responseData['access_token'];
-          final username = responseData['username'];
-          final points = responseData['points'];
+          final token   = responseData['access_token'];
+          final userId  = responseData['user_id'];    // <-- Leggiamo l'ID utente
+          final username= responseData['username'];
+          final points  = responseData['points'];
 
-          if (token != null && username != null && points != null) {
-            await storage.write(
-                key: 'access_token', value: token); // Salva il token
-            await storage.write(key: 'username', value: username);
-            await storage.write(key: 'points', value: points.toString());
+          if (token != null && userId != null && username != null && points != null) {
+            // Salviamo TUTTI i dati (incluso user_id)
+            await storage.write(key: 'access_token', value: token);
+            await storage.write(key: 'user_id',      value: userId.toString());
+            await storage.write(key: 'username',     value: username);
+            await storage.write(key: 'points',       value: points.toString());
 
             _showMessage('Login effettuato con successo.');
 
-            // Naviga alla schermata Home
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const Home()),
             );
           } else {
-            _showMessage(
-                'Dati utente mancanti nella risposta del server.',
-                isError: true);
+            _showMessage('Dati utente mancanti nella risposta del server.', isError: true);
           }
         } else {
           _showMessage('Risposta del server non valida.', isError: true);
@@ -151,27 +135,21 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         try {
           final responseData = json.decode(response.body);
-          _showMessage(responseData['error'] ?? 'Errore durante il login.',
-              isError: true);
+          _showMessage(responseData['error'] ?? 'Errore durante il login.', isError: true);
         } catch (e) {
-          _showMessage(
-              'Errore durante il login. Risposta del server non valida.',
-              isError: true);
+          _showMessage('Errore durante il login. Risposta del server non valida.', isError: true);
         }
       }
     } catch (error) {
       print('Error during login: $error');
       _showMessage('Errore di connessione al server.', isError: true);
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
     }
   }
 
   @override
   void dispose() {
-    // Disposizione dei controller
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -179,28 +157,24 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
+    final screenWidth  = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
-      // App Bar
       appBar: AppBar(
         title: AppColors.gradientText('Login', screenWidth * 0.05),
         backgroundColor: AppColors.backgroundColor,
         elevation: 0,
-        // Back Button
         leading: IconButton(
           icon: CustomPaint(
-            size: Size(45, 45),
+            size: const Size(45, 45),
             painter: GradientIconPainter(
               icon: Icons.arrow_back,
               gradient: AppColors.textGradient,
             ),
           ),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+          onPressed: () => Navigator.of(context).pop(),
         ),
       ),
       body: SafeArea(
@@ -229,8 +203,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                     ),
                   ),
-
-                  // Email TextField
+                  // Email
                   Container(
                     width: screenWidth * 0.8,
                     margin: EdgeInsets.only(top: screenHeight * 0.02),
@@ -256,8 +229,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-
-                  // Password TextField
+                  // Password
                   Container(
                     width: screenWidth * 0.8,
                     margin: EdgeInsets.only(top: screenHeight * 0.02),
@@ -283,8 +255,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-
-                  // Login Button
+                  // Bottone Login
                   Container(
                     margin: EdgeInsets.only(top: screenHeight * 0.025),
                     width: screenWidth * 0.5,
@@ -300,11 +271,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: Container(
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
+                        gradient: const LinearGradient(
                           colors: [
                             Color.fromARGB(110, 214, 57, 196),
                             Color.fromARGB(110, 255, 0, 208),
-                            Color.fromARGB(110, 140, 53, 232)
+                            Color.fromARGB(110, 140, 53, 232),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -329,9 +300,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             ? SizedBox(
                                 width: screenWidth * 0.05,
                                 height: screenWidth * 0.05,
-                                child: CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white),
+                                child: const CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                   strokeWidth: 2.0,
                                 ),
                               )
@@ -346,19 +316,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-
-                  // Link per registrarsi (opzionale)
+                  // Link per registrarsi
                   SizedBox(height: screenHeight * 0.02),
                   TextButton(
                     onPressed: () {
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(
-                            builder: (context) => const RegistrationPage()),
+                        MaterialPageRoute(builder: (context) => const RegistrationPage()),
                       );
                     },
                     child: AppColors.gradientText(
-                        'Non hai un account? Registrati', screenWidth * 0.035),
+                      'Non hai un account? Registrati',
+                      screenWidth * 0.035,
+                    ),
                   ),
                 ],
               ),
@@ -366,6 +336,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
-        );
-      }
-    }
+    );
+  }
+}

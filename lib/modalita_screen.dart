@@ -1,6 +1,9 @@
+// lib/modalita_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // Importa FlutterSecureStorage
 import 'game_screen_spelling.dart';
 import 'app_colors.dart';
 import "backend_config.dart"; 
@@ -13,15 +16,27 @@ class ModalitaScreen extends StatefulWidget {
 }
 
 class _ModalitaScreenState extends State<ModalitaScreen> {
+  final storage = const FlutterSecureStorage(); // Inizializza FlutterSecureStorage
+
   // Funzione per recuperare le parole dal server
   Future<List<String>> fetchWords(String difficulty) async {
-    // const String apiUrl = "https://6d98-95-238-150-172.ngrok-free.app/generate-words"; // Sostituisci con l'indirizzo del tuo server
-    const String apiUrl = BackendConfig.wordsGenerationUrl; // Sostituisci con l'indirizzo del tuo server
+    final String apiUrl = BackendConfig.wordsGenerationUrl; // Utilizza l'URL dal backend_config.dart
 
     try {
+      // Leggi il token JWT salvato
+      final token = await storage.read(key: 'access_token');
+
+      if (token == null) {
+        // Se il token non è presente, mostra un messaggio di errore
+        throw Exception("Token di autenticazione mancante. Effettua il login di nuovo.");
+      }
+
       final response = await http.post(
         Uri.parse(apiUrl),
-        headers: {"Content-Type": "application/json"},
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token", // Aggiungi il token nell'header Authorization
+        },
         body: jsonEncode({"modalita": difficulty}),
       );
 
@@ -29,10 +44,16 @@ class _ModalitaScreenState extends State<ModalitaScreen> {
         final jsonResponse = jsonDecode(response.body);
         return List<String>.from(jsonResponse["words"]);
       } else {
-        throw Exception("Errore nella risposta del server: ${response.body}");
+        // Gestisci errori specifici in base allo status code
+        if (response.statusCode == 401) {
+          throw Exception("Autenticazione fallita. Effettua il login di nuovo.");
+        } else {
+          throw Exception("Errore nella risposta del server: ${response.body}");
+        }
       }
     } catch (e) {
       print("Errore: $e");
+      // Puoi anche mostrare un messaggio all'utente se necessario
       return [];
     }
   }

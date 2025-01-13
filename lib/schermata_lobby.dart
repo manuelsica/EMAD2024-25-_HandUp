@@ -1,11 +1,10 @@
-// lib/schermata_lobby.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'socket_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'app_colors.dart';
 import 'lobby.dart';
 import 'lobby_provider.dart';
+import 'socket_service.dart';
 
 class LobbyScreen extends StatefulWidget {
   final Lobby lobby;
@@ -19,26 +18,22 @@ class LobbyScreen extends StatefulWidget {
 class _LobbyScreenState extends State<LobbyScreen> {
   final storage = const FlutterSecureStorage();
   String _currentUserId = '';
-  late SocketService socketService; // Variabile membro per SocketService
+  late SocketService socketService;
+  bool _isLeaving = false;
 
   @override
   void initState() {
     super.initState();
-
-    // Inizializza socketService qui
     socketService = Provider.of<SocketService>(context, listen: false);
-
-    // Recupera l'ID utente dal secure storage
     _retrieveUserId();
-
-    // Ascolta gli eventi relativi alla lobby tramite LobbyProvider
-    // Ad esempio, per aggiornare i giocatori, potresti utilizzare LobbyProvider
+    _listenForLobbyUpdates();
   }
 
   @override
   void dispose() {
-    // Se necessario, lasciare la lobby quando il widget viene smontato
-    socketService.leaveLobby(widget.lobby.lobbyId);
+    if (!_isLeaving) {
+      socketService.leaveLobby(widget.lobby.lobbyId);
+    }
     super.dispose();
   }
 
@@ -49,18 +44,28 @@ class _LobbyScreenState extends State<LobbyScreen> {
         _currentUserId = userId;
       });
     } else {
-      // Gestisci il caso in cui l'ID utente non sia disponibile
-      _showSnackBar('ID utente non trovato. Effettua il login di nuovo.', isError: true);
+      _showSnackBar('ID utente non trovato. Effettua di nuovo il login.', isError: true);
     }
+  }
+
+  void _listenForLobbyUpdates() {
+    // Se vuoi intercettare un evento di aggiornamento specifico
+    socketService.on('lobby_updated', (data) {
+      final updatedLobby = Lobby.fromJson(data);
+      if (updatedLobby.lobbyId == widget.lobby.lobbyId) {
+        Provider.of<LobbyProvider>(context, listen: false).updateLobby(updatedLobby);
+      }
+    });
+  }
+
+  void _exitLobby() {
+    setState(() => _isLeaving = true);
+    socketService.leaveLobby(widget.lobby.lobbyId);
+    Navigator.pop(context);
   }
 
   void _startGame() {
     socketService.startGame(widget.lobby.lobbyId);
-  }
-
-  void _leaveLobby() {
-    socketService.leaveLobby(widget.lobby.lobbyId);
-    Navigator.pop(context);
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
@@ -74,84 +79,150 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Accedi alla lista dei giocatori tramite LobbyProvider
     final lobbyProvider = Provider.of<LobbyProvider>(context);
-    final lobby = lobbyProvider.lobbies.firstWhere((l) => l.lobbyId == widget.lobby.lobbyId, orElse: () => widget.lobby);
+    final lobby = lobbyProvider.lobbies.firstWhere(
+      (l) => l.lobbyId == widget.lobby.lobbyId,
+      orElse: () => widget.lobby,
+    );
 
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(lobby.lobbyName),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.exit_to_app),
-            onPressed: _leaveLobby,
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(), // chiude la tastiera
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: AppColors.backgroundColor,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.exit_to_app),
+            onPressed: _exitLobby,
           ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Text(
-              'Modalità: ${lobby.type}',
-              style: TextStyle(fontSize: 18),
-            ),
-            SizedBox(height: 10),
-            Text(
-              'Numero di Giocatori: ${lobby.currentPlayers}/${lobby.numPlayers}',
-              style: TextStyle(fontSize: 18),
-            ),
-            SizedBox(height: 20),
-            Text(
-              'Partecipanti:',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            Expanded(
-              child: ListView.builder(
-                itemCount: lobby.players.length,
-                itemBuilder: (context, index) {
-                  String username = lobby.players[index];
-                  return ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.purple,
-                      child: Text(
-                        username[0],
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    title: Text(
-                      username,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: screenWidth * 0.04,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            if (lobby.creator == _currentUserId)
-              ElevatedButton(
-                onPressed: _startGame,
-                child: Text('Inizia Partita'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.textColor1.withOpacity(0.2),
-                  foregroundColor: AppColors.textColor1,
-                  padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
+          title: Text(
+            'Lobby di ${lobby.creator}',
+            style: const TextStyle(color: Colors.white),
+          ),
+          centerTitle: true,
+        ),
+        backgroundColor: AppColors.backgroundColor,
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Esempio di informazioni
+              Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(15),
+                  color: Colors.purple.shade900.withOpacity(0.3),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildInfoRow('Nome:', lobby.lobbyName, screenWidth),
+                    const SizedBox(height: 10),
+                    _buildInfoRow('Modalità:', lobby.type, screenWidth),
+                    const SizedBox(height: 10),
+                    _buildInfoRow('Giocatori:', '${lobby.currentPlayers}/${lobby.numPlayers}', screenWidth),
+                  ],
                 ),
               ),
-          ],
+
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: lobby.players.length,
+                  itemBuilder: (context, index) {
+                    final username = lobby.players[index];
+                    return _buildParticipantTile(username, username[0], screenWidth);
+                  },
+                ),
+              ),
+
+              // Se l’utente è il creatore
+              if (lobby.creator == _currentUserId)
+                Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Container(
+                    width: double.infinity,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.white.withOpacity(0.2),
+                          blurRadius: 20,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      onPressed: _startGame,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.purple.shade800,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                      ),
+                      child: Text(
+                        'Inizia Partita',
+                        style: TextStyle(fontSize: screenWidth * 0.045),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value, double screenWidth) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: screenWidth * 0.04,
+              fontWeight: FontWeight.bold,
+            )),
+        Text(
+          value,
+          style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.04),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildParticipantTile(String username, String avatar, double screenWidth) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(15),
+        color: Colors.purple.shade900.withOpacity(0.3),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: Colors.purple,
+            child: Text(
+              avatar,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            username,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: screenWidth * 0.04,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }

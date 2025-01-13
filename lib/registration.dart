@@ -44,17 +44,15 @@ class RegistrationScreen extends StatefulWidget {
 }
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
-  // Controller per i campi di testo
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _emailController    = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _usernameController       = TextEditingController();
+  final TextEditingController _emailController          = TextEditingController();
+  final TextEditingController _passwordController       = TextEditingController();
+  final TextEditingController _confirmPasswordController= TextEditingController();
 
-  final FlutterSecureStorage storage = FlutterSecureStorage();
+  final FlutterSecureStorage storage = const FlutterSecureStorage();
 
   bool _isLoading = false;
 
-  // Funzione per mostrare messaggi di dialogo
   void _showMessage(String message, {bool isError = false}) {
     showDialog(
       context: context,
@@ -71,49 +69,33 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
   }
 
-  // Funzione per effettuare la registrazione
   Future<void> _register() async {
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     final username = _usernameController.text.trim();
     final email    = _emailController.text.trim();
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
 
-    // Validazione dei campi
     if (username.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
       _showMessage('Per favore, compila tutti i campi.', isError: true);
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
       return;
     }
-
     if (password != confirmPassword) {
       _showMessage('Le password non corrispondono.', isError: true);
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
       return;
     }
 
-    // Validazione dell'email
     final emailRegex = RegExp(r"[^@]+@[^@]+\.[^@]+");
     if (!emailRegex.hasMatch(email)) {
       _showMessage('Email non valida.', isError: true);
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
       return;
     }
 
-    // URL del tuo server Flask
-    final url = Uri.parse(
-      // 'https://1d22-95-238-150-172.ngrok-free.app/register'
-      BackendConfig.registerUrl
-      );  // Sostituisci con il tuo indirizzo server
+    final url = Uri.parse(BackendConfig.registerUrl);
 
     try {
       final response = await http.post(
@@ -133,44 +115,44 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       final responseData = json.decode(response.body);
 
       if (response.statusCode == 201) {
-        // Salva i dati dell'utente
+        // Leggiamo i campi dal server
         final accessToken = responseData['access_token'];
-        final points = responseData['points'] ?? 0;
+        final userId      = responseData['user_id'];   // <-- user_id
+        final points      = responseData['points']     ?? 0;
         final returnedUsername = responseData['username'] ?? username;
 
         print('Access Token Received: $accessToken');
         print('Username Received: $returnedUsername');
         print('Points Received: $points');
+        print('User ID Received: $userId');
 
-        if (accessToken != null) {
+        if (accessToken != null && userId != null) {
           await storage.write(key: 'access_token', value: accessToken);
-          await storage.write(key: 'username', value: returnedUsername);
-          await storage.write(key: 'points', value: points.toString());
+          await storage.write(key: 'user_id',      value: userId.toString());
+          await storage.write(key: 'username',     value: returnedUsername);
+          await storage.write(key: 'points',       value: points.toString());
 
           _showMessage('Registrazione avvenuta con successo.');
-          // Naviga alla schermata Home
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const Home()),
           );
         } else {
-          _showMessage('Token non ricevuto dal server.', isError: true);
+          _showMessage('Token o ID utente non ricevuti dal server.', isError: true);
         }
       } else {
         _showMessage(responseData['error'] ?? 'Errore durante la registrazione.', isError: true);
       }
     } catch (error) {
+      print('Errore di connessione: $error');
       _showMessage('Errore di connessione al server.', isError: true);
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
     }
   }
 
   @override
   void dispose() {
-    // Disposizione dei controller
     _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -185,25 +167,20 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
-        //App Bar
-        appBar: AppBar(
+      appBar: AppBar(
         title: AppColors.gradientText('Registrazione', screenWidth * 0.05),
         backgroundColor: AppColors.backgroundColor,
         elevation: 0,
-        //Back Button
         leading: IconButton(
           icon: CustomPaint(
-            size: Size(45, 45),
+            size: const Size(45, 45),
             painter: GradientIconPainter(
               icon: Icons.arrow_back,
               gradient: AppColors.textGradient,
             ),
           ),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+          onPressed: () => Navigator.of(context).pop(),
         ),
-
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -226,12 +203,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         print('Error loading image: $error');
-                        return Icon(Icons.error, size: screenWidth * 0.8, color: Colors.red);
+                        return Icon(Icons.error,
+                            size: screenWidth * 0.8, color: Colors.red);
                       },
                     ),
                   ),
 
-                  // Username TextField
+                  // Username
                   Container(
                     width: screenWidth * 0.8,
                     margin: EdgeInsets.only(top: screenHeight * 0.02),
@@ -257,7 +235,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     ),
                   ),
 
-                  // Email TextField
+                  // Email
                   Container(
                     width: screenWidth * 0.8,
                     margin: EdgeInsets.only(top: screenHeight * 0.02),
@@ -284,7 +262,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     ),
                   ),
 
-                  // Password TextField
+                  // Password
                   Container(
                     width: screenWidth * 0.8,
                     margin: EdgeInsets.only(top: screenHeight * 0.02),
@@ -311,7 +289,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     ),
                   ),
 
-                  // Confirm Password TextField
+                  // Conferma Password
                   Container(
                     width: screenWidth * 0.8,
                     margin: EdgeInsets.only(top: screenHeight * 0.02),
@@ -338,7 +316,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     ),
                   ),
 
-                  // Register Button
+                  // Bottone Registrati
                   Container(
                     margin: EdgeInsets.only(top: screenHeight * 0.025),
                     width: screenWidth * 0.5,
@@ -354,7 +332,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     ),
                     child: Container(
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
+                        gradient: const LinearGradient(
                           colors: [
                             Color.fromARGB(110, 214, 57, 196),
                             Color.fromARGB(110, 255, 0, 208),
@@ -379,23 +357,23 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           shadowColor: Colors.transparent,
                         ),
                         onPressed: _isLoading ? null : _register,
-                        child: _isLoading 
-                          ? SizedBox(
-                              width: screenWidth * 0.05,
-                              height: screenWidth * 0.05,
-                              child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                strokeWidth: 2.0,
+                        child: _isLoading
+                            ? SizedBox(
+                                width: screenWidth * 0.05,
+                                height: screenWidth * 0.05,
+                                child: const CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  strokeWidth: 2.0,
+                                ),
+                              )
+                            : Text(
+                                'Registrati',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: screenWidth * 0.045,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            )
-                          : Text(
-                              'Registrati',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: screenWidth * 0.045,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
                       ),
                     ),
                   ),

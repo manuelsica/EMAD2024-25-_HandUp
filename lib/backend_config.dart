@@ -1,7 +1,7 @@
 class BackendConfig {
-  static const String baseUrl = 'https://1d22-95-238-150-172.ngrok-free.app/';
+  static const String baseUrl = 'https://c8ed-87-17-154-236.ngrok-free.app/';
   static const String loginUrl = '$baseUrl/login';
   static const String registerUrl = '$baseUrl/register';
   static const String wordsGenerationUrl = '$baseUrl/generate-words';
-  static const String predictUrl = '$baseUrl/predict';
+  static const String predictUrl = '$baseUrl/predict/';
 }

@@ -10,6 +10,7 @@ import "app_colors.dart";
 import 'package:google_fonts/google_fonts.dart';
 import "sidemenu.dart"; // Import del menu laterale
 import 'package:hand_up_interface/risultati_singleplayer.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import "top_bar.dart";
 import "backend_config.dart";
 
@@ -182,27 +183,49 @@ class _GameScreenState extends State<GameScreen>
   }
 
   Future<Map<String, dynamic>?> _sendImageToServer(Uint8List imageBytes) async {
-    try {
-      String base64Image = base64Encode(imageBytes);
-      String platform = Platform.isAndroid ? "android" : "ios";
+  try {
+    String base64Image = base64Encode(imageBytes);
+    String platform = Platform.isAndroid ? "android" : "ios";
 
-      final response = await http.post(
-        Uri.parse(serverURL),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"image": base64Image, "platform": platform}),
+    // Recupera il token JWT salvato
+    final storage = FlutterSecureStorage();
+    String? jwtToken = await storage.read(key: 'access_token'); // Usa 'access_token' invece di 'jwt_token'
+
+    if (jwtToken == null) {
+      debugPrint("Token JWT mancante.");
+      // Mostra un messaggio di errore all'utente
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Token di autenticazione mancante. Effettua il login di nuovo.")),
       );
-
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        debugPrint("Errore dal server: ${response.body}");
-        return null;
-      }
-    } catch (e) {
-      debugPrint("Errore nella richiesta al server: $e");
       return null;
     }
+
+    final response = await http.post(
+      Uri.parse(serverURL),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $jwtToken", // Aggiungi il token nell'header Authorization
+      },
+      body: jsonEncode({"image": base64Image, "platform": platform}),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      debugPrint("Errore dal server: ${response.body}");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Errore dal server: ${response.body}")),
+      );
+      return null;
+    }
+  } catch (e) {
+    debugPrint("Errore nella richiesta al server: $e");
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Errore nella richiesta al server: $e")),
+    );
+    return null;
   }
+}
 
   Future<Uint8List?> _convertCameraImage(CameraImage image) async {
     try {
