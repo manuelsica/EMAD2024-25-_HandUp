@@ -1,4 +1,24 @@
 // lib/lobby.dart
+class PlayerInfo {
+  final String userId;
+  final String username;
+  final bool isReady;
+
+  PlayerInfo({
+    required this.userId,
+    required this.username,
+    required this.isReady,
+  });
+
+  factory PlayerInfo.fromJson(Map<String, dynamic> json) {
+    return PlayerInfo(
+      userId: json['user_id'] ?? '',
+      username: json['username'] ?? '',
+      isReady: json['is_ready'] ?? false,
+    );
+  }
+}
+
 class Lobby {
   final String id;
   final String lobbyId;
@@ -8,7 +28,9 @@ class Lobby {
   final int currentPlayers;
   final String creator;
   final bool isLocked;
-  final List<String> players;
+
+  // MODIFICA: lista di oggetti PlayerInfo
+  final List<PlayerInfo> players;
 
   Lobby({
     required this.id,
@@ -23,6 +45,14 @@ class Lobby {
   });
 
   factory Lobby.fromJson(Map<String, dynamic> json) {
+    // Costruisce la lista di PlayerInfo da json['players']
+    List<PlayerInfo> playerList = [];
+    if (json['players'] is List) {
+      playerList = (json['players'] as List)
+          .map((p) => PlayerInfo.fromJson(p))
+          .toList();
+    }
+
     return Lobby(
       id: json['id'] as String? ?? 'unknown_id',
       lobbyId: json['lobby_id'] as String? ?? 'unknown_lobby_id',
@@ -36,9 +66,7 @@ class Lobby {
           : int.tryParse(json['current_players'].toString()) ?? 0,
       creator: json['creator'] as String? ?? 'Unknown',
       isLocked: json['is_locked'] as bool? ?? false,
-      players: json['players'] is List
-          ? List<String>.from(json['players'])
-          : [],
+      players: playerList,
     );
   }
 }

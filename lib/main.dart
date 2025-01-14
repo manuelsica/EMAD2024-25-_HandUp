@@ -1,14 +1,18 @@
+// lib/main.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import "package:flutter_svg/flutter_svg.dart";
-import "sidemenu.dart";
-import "game_screen_spelling.dart";
-import "app_colors.dart";
-import "modalita_screen.dart";
+import 'package:provider/provider.dart'; // Importa Provider
 import 'package:google_fonts/google_fonts.dart';
+import 'socket_service.dart';
+import 'sidemenu.dart';
+import 'game_screen_spelling.dart';
+import 'app_colors.dart';
+import 'modalita_screen.dart';
 import 'login.dart';
 import 'registration.dart';
-import "intro_screen.dart";
+import 'intro_screen.dart';
+import 'risultati_partita.dart'; // Assicurati di avere questa schermata
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,7 +20,18 @@ void main() {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]).then((_) {
-    runApp(const MyApp());
+    runApp(
+      MultiProvider(
+        providers: [
+          Provider<SocketService>(
+            create: (_) => SocketService(),
+            dispose: (_, socketService) => socketService.dispose(),
+          ),
+          // Aggiungi altri provider se necessario
+        ],
+        child: const MyApp(),
+      ),
+    );
   });
 }
 
@@ -25,6 +40,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Recupera l'istanza di SocketService
+    final socketService = Provider.of<SocketService>(context, listen: false);
+    socketService.connect(); // Avvia la connessione Socket.IO
+
     return MaterialApp(
       title: 'HandUp App', // Aggiungi un titolo per la tua app
       theme: ThemeData(
@@ -67,7 +86,7 @@ class LandingPageScreen extends StatelessWidget {
                   },
                 ),
               ),
-              
+
               // Start Now Button
               Container(
                 width: screenWidth * 0.5,
@@ -125,9 +144,9 @@ class LandingPageScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              
+
               SizedBox(height: screenHeight * 0.02),
-              
+
               // Login Text Button
               TextButton(
                 onPressed: () {
@@ -138,7 +157,7 @@ class LandingPageScreen extends StatelessWidget {
                 },
                 child: AppColors.gradientText('Login', screenWidth * 0.04),
               ),
-              
+
               // Registrati Text Button
               TextButton(
                 onPressed: () {
@@ -149,7 +168,6 @@ class LandingPageScreen extends StatelessWidget {
                 },
                 child: AppColors.gradientText('Registrati', screenWidth * 0.04),
               ),
-              
             ],
           ),
         ),

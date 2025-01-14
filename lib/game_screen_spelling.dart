@@ -200,6 +200,7 @@ class _GameScreenState extends State<GameScreen>
       return null;
     }
 
+    print('Invio richiesta a: $serverURL');
     final response = await http.post(
       Uri.parse(serverURL),
       headers: {
