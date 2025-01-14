@@ -27,7 +27,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}}, allow_headers=["Content-Type", "Authorization"])
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Configurazione JWT: scadenza a 7 giorni per evitare errori di scadenza immediata
 app.config['JWT_SECRET_KEY'] = 'V^8pZ4!kF#2sX@uJ9$L1mB&dR5eT3yC8oQ'
@@ -58,7 +58,7 @@ hands = mp_hands.Hands(static_image_mode=False, max_num_hands=2, min_detection_c
 
 labels_dict = {i: chr(65 + i) for i in range(26)}
 
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 def get_all_lobbies_from_db():
     """Recupera le lobby da view_lobbies e i relativi giocatori da lobby_players."""
@@ -66,8 +66,9 @@ def get_all_lobbies_from_db():
         resp_lobbies = supabase.table("view_lobbies").select("*").execute()
         lobbies_data = resp_lobbies.data
 
+        # MODIFICA: recupera anche is_ready e user_id
         resp_players = supabase.table("lobby_players") \
-            .select("lobby_id, users(username)") \
+            .select("lobby_id, user_id, is_ready, users(username)") \
             .execute()
         players_data = resp_players.data
 
@@ -75,9 +76,17 @@ def get_all_lobbies_from_db():
         for row in players_data:
             lid = row["lobby_id"]
             username = row["users"]["username"]
+            user_id = row["user_id"]
+            is_ready = row["is_ready"]
+
             if lid not in lobby_players_map:
                 lobby_players_map[lid] = []
-            lobby_players_map[lid].append(username)
+
+            lobby_players_map[lid].append({
+                "user_id": user_id,
+                "username": username,
+                "is_ready": is_ready
+            })
 
         final_list = []
         for lb in lobbies_data:
@@ -91,6 +100,7 @@ def get_all_lobbies_from_db():
                 "current_players": lb["current_players"],
                 "creator": lb["creator_id"],
                 "is_locked": lb["is_locked"],
+                # MODIFICA: la lista di dict (user_id, username, is_ready)
                 "players": lobby_players_map.get(lb_id, [])
             })
         return final_list
@@ -105,7 +115,6 @@ def broadcast_lobbies():
 
 def generate_lobby_id(length=6):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
-
 #################### SOCKET.IO EVENTS ####################
 
 @socketio.on('connect')
@@ -134,16 +143,21 @@ def handle_create_lobby(data):
 
         if not lobby_name or not lobby_type or not num_players:
             emit('error', {'error': 'Campi mancanti per la creazione della lobby.'})
+            logger.warning("Creazione lobby fallita: campi mancanti.")
             return
+
+        logger.info(f"Creazione lobby con nome: {lobby_name}, tipo: {lobby_type}, numero giocatori: {num_players}")
 
         # Recupera username
         user_resp = supabase.table('users').select('id, username').eq('id', current_user_id).execute()
         if not user_resp.data:
             emit('error', {'error': 'Utente non trovato.'})
+            logger.warning(f"Utente con ID {current_user_id} non trovato durante la creazione della lobby.")
             return
         creator_username = user_resp.data[0]['username']
 
         lobby_id_text = generate_lobby_id()
+        logger.info(f"Generated lobby_id: {lobby_id_text}")
 
         new_lobby = supabase.table('lobbies').insert({
             'lobby_id': lobby_id_text,
@@ -156,14 +170,17 @@ def handle_create_lobby(data):
 
         if not new_lobby.data:
             emit('error', {'error': 'Impossibile creare la lobby.'})
+            logger.error("Errore durante l'inserimento della lobby nel DB.")
             return
 
         created_lobby = new_lobby.data[0]
+        logger.info(f"Lobby creata: {created_lobby}")
 
         supabase.table('lobby_players').insert({
             'lobby_id': created_lobby['id'],
             'user_id': current_user_id
         }).execute()
+        logger.info(f"Utente {current_user_id} aggiunto a 'lobby_players' per la lobby {created_lobby['id']}.")
 
         emit('lobby_created', {
             'lobby': {
@@ -175,12 +192,21 @@ def handle_create_lobby(data):
                 'current_players': 1,
                 'creator': creator_username,
                 'is_locked': bool(password),
-                'players': [creator_username]
+                # players di base: owner non pronto
+                'players': [{
+                    'user_id': current_user_id,
+                    'username': creator_username,
+                    'is_ready': False
+                }]
             }
         }, room=request.sid)
+        logger.info(f"Lobby {created_lobby['lobby_id']} creata e giocatore aggiunto.")
 
         join_room(created_lobby['lobby_id'])
+        logger.info(f"Utente {current_user_id} unito alla stanza '{created_lobby['lobby_id']}'.")
+
         broadcast_lobbies()
+        logger.info("Broadcast delle lobby aggiornata.")
 
     except Exception as e:
         logger.error(f"Eccezione in create_lobby: {e}")
@@ -344,11 +370,44 @@ def handle_start_game(data):
             emit('error', {'error': 'Solo il creatore può avviare il gioco.'})
             return
 
-        socketio.emit('game_started', {'message': 'Il gioco è iniziato!'}, to=db_lobby['lobby_id'])
+        # Emettiamo l'evento 'game_started' a tutti nella lobby
+        socketio.emit(
+            'game_started',
+            {'lobby_id': db_lobby['lobby_id']},
+            to=db_lobby['lobby_id']
+        )
 
     except Exception as e:
         logger.error(f"Errore start_game: {e}")
         emit('error', {'error': 'Errore nell\'avviare il gioco.'})
+
+@socketio.on('toggle_ready')
+@jwt_required()
+def handle_toggle_ready(data):
+    try:
+        current_user_id = get_jwt_identity()
+        lobby_id_text = data.get('lobby_id')
+
+        # Recupera la lobby
+        resp = supabase.table('lobbies').select('id').eq('lobby_id', lobby_id_text).execute()
+        if not resp.data:
+            emit('error', {'error': 'Lobby non trovata.'})
+            return
+        db_lobby_id = resp.data[0]['id']
+
+        # Aggiorna lo stato "is_ready" per l’utente in lobby_players
+        new_ready_state = data.get('is_ready', False)
+        supabase.table('lobby_players') \
+                .update({'is_ready': new_ready_state}) \
+                .eq('lobby_id', db_lobby_id) \
+                .eq('user_id', current_user_id) \
+                .execute()
+
+        # Avvisa tutti della lobby aggiornata (riutilizza la funzione esistente di broadcast se preferisci)
+        broadcast_lobbies()
+    except Exception as e:
+        logger.error(f"Errore toggle_ready: {e}")
+        emit('error', {'error': 'Errore nel cambiare stato pronto.'})
 
 @socketio.on('get_lobbies')
 @jwt_required()
@@ -359,6 +418,170 @@ def handle_get_lobbies():
     except Exception as e:
         logger.error(f"Errore get_lobbies: {e}")
         emit('error', {'error': 'Errore nel recuperare le lobby.'})
+
+
+# ======== STRUTTURA DATI PER LE VOTAZIONI IN MEMORIA =========
+lobby_votes = {}
+
+
+# Formato: {
+#   lobby_id (string): {
+#       "numPlayers": 2 (numero TOT di player in lobby),
+#       "votes": {
+#           user_id (uuid/str): "facile"|"medio"|"difficile"
+#       }
+#   }
+# }
+
+# Funzione d'appoggio per recuperare num. player della lobby
+def get_number_of_players(lobby_uuid):
+    """
+    Ritorna quanti giocatori risultano in lobby_players per la lobby 'lobby_uuid'
+    """
+    resp = supabase.table("lobby_players").select("user_id", count='exact').eq("lobby_id", lobby_uuid).execute()
+    return resp.count if resp.count else 0
+
+
+# Emissione risultato
+def broadcast_vote_result(lobby_id, mode_chosen):
+    # Manda a tutti i client nella room = lobby_id
+    socketio.emit(
+        'vote_result',
+        {"mode_chosen": mode_chosen},
+        to=lobby_id
+    )
+
+
+@socketio.on('vote_mode')
+@jwt_required()
+def handle_vote_mode(data):
+    """
+    data: { "lobby_id": "...", "mode": "facile|medio|difficile" }
+    """
+    try:
+        current_user_id = get_jwt_identity()  # ID/UUID dell'utente
+        lobby_id_text = data.get('lobby_id')
+        chosen_mode = data.get('mode')
+
+        if not lobby_id_text or not chosen_mode:
+            emit('error', {'error': 'Parametri mancanti per la votazione.'})
+            return
+
+        # Recupera la lobby dal DB
+        # (In 'lobbies' la colonna 'lobby_id' è un testo, la PK è 'id' = uuid)
+        resp = supabase.table('lobbies').select('id').eq('lobby_id', lobby_id_text).execute()
+        if not resp.data:
+            emit('error', {'error': 'Lobby non trovata.'})
+            return
+        db_lobby = resp.data[0]
+        db_lobby_id = db_lobby["id"]
+
+        # Inizializza se non esiste in memory
+        if lobby_id_text not in lobby_votes:
+            lobby_votes[lobby_id_text] = {
+                "numPlayers": get_number_of_players(db_lobby_id),
+                "votes": {}
+            }
+
+        # Salva la scelta
+        lobby_votes[lobby_id_text]["votes"][current_user_id] = chosen_mode
+        logging.info(f"Voto: utente={current_user_id}, lobby={lobby_id_text}, mode={chosen_mode}")
+
+        # Se TUTTI i player di questa lobby hanno votato:
+        votes_dict = lobby_votes[lobby_id_text]["votes"]
+        total_players = lobby_votes[lobby_id_text]["numPlayers"]
+        if len(votes_dict) == total_players and total_players > 0:
+            # Calcola la modalità vincente
+            # Conta i voti: { "facile": n, "medio": n, "difficile": n }
+            counter = {}
+            for m in votes_dict.values():
+                counter[m] = counter.get(m, 0) + 1
+
+            # Trova max
+            max_count = max(counter.values())
+            # Prendi tutte le modalità che hanno max_count
+            candidates = [mode for mode, cnt in counter.items() if cnt == max_count]
+
+            if len(candidates) == 1:
+                final_mode = candidates[0]
+            else:
+                final_mode = random.choice(candidates)  # spareggio casuale
+
+            logging.info(f"Risultato votazione (lobby={lobby_id_text}): {final_mode}")
+
+            # Emissione a tutti
+            broadcast_vote_result(lobby_id_text, final_mode)
+
+            # Reset voti (opzionale, se vuoi che dopo la partita possano rivotare)
+            lobby_votes.pop(lobby_id_text, None)
+
+    except Exception as e:
+        logging.error(f"Errore in vote_mode: {e}")
+        emit('error', {'error': 'Errore interno in vote_mode.'})
+
+player_screen_map = {}
+# struttura: { "LOBBY_ID": set([user1, user2, ...]) }
+
+@socketio.on('player_on_game_screen')
+@jwt_required()
+def handle_player_on_game_screen(data):
+    try:
+        current_user_id = get_jwt_identity()
+        lobby_id_text = data.get('lobby_id')
+        if not lobby_id_text:
+            emit('error', {'error': 'Lobby non valida.'})
+            logger.warning("Evento 'player_on_game_screen' ricevuto senza 'lobby_id'.")
+            return
+
+        logger.info(f"Gestione 'player_on_game_screen' per lobby_id: {lobby_id_text} da utente: {current_user_id}")
+
+        # Recupera la lobby dal DB
+        resp = supabase.table('lobbies').select('id').eq('lobby_id', lobby_id_text).execute()
+        if not resp.data:
+            emit('error', {'error': 'Lobby non trovata.'})
+            logger.warning(f"Lobby con lobby_id: {lobby_id_text} non trovata.")
+            return
+        db_lobby = resp.data[0]
+        db_lobby_id = db_lobby["id"]
+        logger.info(f"Lobby trovata: ID Interno = {db_lobby_id}")
+
+        # Conteggio totale player
+        resp_count = supabase.table('lobby_players') \
+            .select('user_id', count='exact') \
+            .eq('lobby_id', db_lobby_id).execute()
+        total_players_in_lobby = resp_count.count or 0
+        logger.info(f"Numero totale di giocatori nella lobby '{lobby_id_text}': {total_players_in_lobby}")
+
+        # Aggiorna la mappa dei giocatori nella GameScreen
+        if lobby_id_text not in player_screen_map:
+            player_screen_map[lobby_id_text] = set()
+            logger.info(f"Inizializzata nuova entry in player_screen_map per lobby_id: {lobby_id_text}")
+
+        # Aggiungi l'utente corrente
+        if current_user_id in player_screen_map[lobby_id_text]:
+            logger.info(f"Utente {current_user_id} ha già segnalato di essere nella GameScreen per la lobby '{lobby_id_text}'.")
+        else:
+            player_screen_map[lobby_id_text].add(current_user_id)
+            logger.info(f"Utente {current_user_id} aggiunto a player_screen_map per la lobby '{lobby_id_text}'.")
+            logger.info(f"Numero di giocatori segnati nella GameScreen: {len(player_screen_map[lobby_id_text])}")
+
+        # Verifica se tutti i giocatori sono nella GameScreen
+        if len(player_screen_map[lobby_id_text]) == total_players_in_lobby:
+            logger.info(f"Tutti i giocatori sono presenti nella GameScreen per la lobby '{lobby_id_text}'. Emissione di 'start_timer'.")
+            socketio.emit(
+                'start_timer',
+                {'message': 'Tutti i player presenti, avvio timer!'},
+                to=lobby_id_text
+            )
+            # Reset della mappa per future partite
+            player_screen_map.pop(lobby_id_text, None)
+        else:
+            logger.info(f"Mancano {total_players_in_lobby - len(player_screen_map[lobby_id_text])} giocatori per avviare il timer nella lobby '{lobby_id_text}'.")
+
+    except Exception as e:
+        logger.error(f"Errore in player_on_game_screen: {e}")
+        emit('error', {'error': 'Errore nel segnalare player_on_game_screen.'})
+
 
 #################### ENDPOINTS HTTP DI SERVIZIO ####################
 
