@@ -1,3 +1,5 @@
+# server.py
+
 import eventlet
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -18,18 +20,21 @@ import google.generativeai as genai
 from supabase import create_client, Client
 import bcrypt
 from flask_jwt_extended import (
-    JWTManager, create_access_token, jwt_required, get_jwt_identity
+    JWTManager, create_access_token, decode_token, get_jwt_identity, jwt_required
 )
-from flask_socketio import SocketIO, emit, join_room, leave_room
+from flask_socketio import SocketIO, emit, join_room, leave_room, disconnect
 from datetime import timedelta
+import uuid
+import json
 
+# Configurazioni di base
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-# Configurazione JWT: scadenza a 7 giorni per evitare errori di scadenza immediata
+# Configurazione JWT
 app.config['JWT_SECRET_KEY'] = 'V^8pZ4!kF#2sX@uJ9$L1mB&dR5eT3yC8oQ'
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7)
 jwt = JWTManager(app)
@@ -40,12 +45,12 @@ SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Configura Generative AI
-genai.configure(api_key="key")
+genai.configure(api_key="")  # Sostituisci con la tua chiave API
 generative_model = genai.GenerativeModel("gemini-1.5-flash")
 logger.info("Modello GenerativeModel di Gemini caricato con successo.")
 
 # Carica modello Keras (.h5)
-model_path = 'model_trained_100_cell.h5'
+model_path = 'model_ufficial.h5'
 try:
     model = load_model(model_path)
     logger.info("Modello Keras (.h5) caricato con successo.")
@@ -58,7 +63,10 @@ hands = mp_hands.Hands(static_image_mode=False, max_num_hands=2, min_detection_c
 
 labels_dict = {i: chr(65 + i) for i in range(26)}
 
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+
+# Dizionario per mappare sid a user_id
+users = {}
 
 def get_all_lobbies_from_db():
     """Recupera le lobby da view_lobbies e i relativi giocatori da lobby_players."""
@@ -66,7 +74,7 @@ def get_all_lobbies_from_db():
         resp_lobbies = supabase.table("view_lobbies").select("*").execute()
         lobbies_data = resp_lobbies.data
 
-        # MODIFICA: recupera anche is_ready e user_id
+        # Recupera anche is_ready e user_id
         resp_players = supabase.table("lobby_players") \
             .select("lobby_id, user_id, is_ready, users(username)") \
             .execute()
@@ -100,7 +108,6 @@ def get_all_lobbies_from_db():
                 "current_players": lb["current_players"],
                 "creator": lb["creator_id"],
                 "is_locked": lb["is_locked"],
-                # MODIFICA: la lista di dict (user_id, username, is_ready)
                 "players": lobby_players_map.get(lb_id, [])
             })
         return final_list
@@ -115,26 +122,54 @@ def broadcast_lobbies():
 
 def generate_lobby_id(length=6):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+
 #################### SOCKET.IO EVENTS ####################
 
 @socketio.on('connect')
-@jwt_required()
 def handle_connect():
-    current_user_id = get_jwt_identity()
-    logger.info(f"Utente {current_user_id} connesso a SocketIO.")
-    emit('connected', {'message': 'Connesso al server SocketIO.'})
+    token = request.args.get('token')
+    if not token:
+        emit('error', {'error': 'Token mancante.'})
+        disconnect()
+        return
+
+    try:
+        decoded_token = decode_token(token)
+        user_id = decoded_token['sub']
+        if not user_id:
+            emit('error', {'error': 'Token non valido.'})
+            disconnect()
+            return
+
+        # Associa l'user_id al sid
+        users[request.sid] = user_id
+        logger.info(f"Utente {user_id} connesso a SocketIO con sid {request.sid}.")
+        emit('connected', {'message': 'Connesso al server SocketIO.'})
+
+    except Exception as e:
+        logger.error(f"Errore nella decodifica del token: {e}")
+        emit('error', {'error': 'Token non valido.'})
+        disconnect()
 
 @socketio.on('disconnect')
 def handle_disconnect():
-    logger.info("Un utente si è disconnesso da SocketIO.")
+    user_id = users.get(request.sid, 'Unknown')
+    logger.info(f"Utente {user_id} disconnesso da SocketIO con sid {request.sid}.")
+    users.pop(request.sid, None)
+
+def get_current_user_id():
+    """Recupera l'ID utente associato al socket corrente."""
+    return users.get(request.sid)
 
 @socketio.on('create_lobby')
-@jwt_required()
 def handle_create_lobby(data):
     try:
-        logger.info(f"create_lobby ricevuto: {data}")
+        current_user_id = get_current_user_id()
+        if not current_user_id:
+            emit('error', {'error': 'Utente non autenticato.'})
+            return
 
-        current_user_id = get_jwt_identity()
+        logger.info(f"create_lobby ricevuto: {data}")
 
         lobby_name = data.get('lobby_name')
         lobby_type = data.get('type')
@@ -182,6 +217,9 @@ def handle_create_lobby(data):
         }).execute()
         logger.info(f"Utente {current_user_id} aggiunto a 'lobby_players' per la lobby {created_lobby['id']}.")
 
+        join_room(created_lobby['lobby_id'])
+        logger.info(f"Utente {current_user_id} unito alla stanza '{created_lobby['lobby_id']}'.")
+
         emit('lobby_created', {
             'lobby': {
                 'id': created_lobby['id'],
@@ -192,7 +230,6 @@ def handle_create_lobby(data):
                 'current_players': 1,
                 'creator': creator_username,
                 'is_locked': bool(password),
-                # players di base: owner non pronto
                 'players': [{
                     'user_id': current_user_id,
                     'username': creator_username,
@@ -202,9 +239,6 @@ def handle_create_lobby(data):
         }, room=request.sid)
         logger.info(f"Lobby {created_lobby['lobby_id']} creata e giocatore aggiunto.")
 
-        join_room(created_lobby['lobby_id'])
-        logger.info(f"Utente {current_user_id} unito alla stanza '{created_lobby['lobby_id']}'.")
-
         broadcast_lobbies()
         logger.info("Broadcast delle lobby aggiornata.")
 
@@ -213,10 +247,13 @@ def handle_create_lobby(data):
         emit('error', {'error': 'Errore nella creazione della lobby.'})
 
 @socketio.on('join_lobby')
-@jwt_required()
 def handle_join_lobby(data):
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
+        if not current_user_id:
+            emit('error', {'error': 'Utente non autenticato.'})
+            return
+
         lobby_id_text = data.get('lobby_id')
         input_password = data.get('password', None)
 
@@ -224,6 +261,7 @@ def handle_join_lobby(data):
             emit('error', {'error': 'ID della lobby mancante.'})
             return
 
+        # Recupera la lobby
         lobby_resp = supabase.table('lobbies') \
             .select('id, lobby_id, password, num_players') \
             .eq('lobby_id', lobby_id_text) \
@@ -265,7 +303,6 @@ def handle_join_lobby(data):
         emit('error', {'error': 'Errore nell\'unirsi alla lobby.'})
 
 @socketio.on('leave_lobby')
-@jwt_required()
 def handle_leave_lobby(data):
     """
     Rimuove l'utente dalla lobby.
@@ -273,7 +310,11 @@ def handle_leave_lobby(data):
     Se l'owner esce ma rimangono altri player, ownership passa casualmente a un altro.
     """
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
+        if not current_user_id:
+            emit('error', {'error': 'Utente non autenticato.'})
+            return
+
         lobby_id_text = data.get('lobby_id')
 
         if not lobby_id_text:
@@ -281,7 +322,7 @@ def handle_leave_lobby(data):
             return
 
         # Recupera la lobby
-        resp = supabase.table('lobbies').select('id, lobby_id').eq('lobby_id', lobby_id_text).execute()
+        resp = supabase.table('lobbies').select('id, lobby_id, creator_id').eq('lobby_id', lobby_id_text).execute()
         if not resp.data:
             emit('error', {'error': 'Lobby non trovata.'})
             return
@@ -334,7 +375,6 @@ def handle_leave_lobby(data):
                             .eq('id', db_lobby['id']) \
                             .execute()
                         logger.info(f"Nuovo owner (random): {new_owner_id} per la lobby {db_lobby['lobby_id']}.")
-
             # Notifica a tutti i player rimasti
             socketio.emit('player_left', {'user_id': current_user_id}, to=db_lobby['lobby_id'])
 
@@ -347,10 +387,13 @@ def handle_leave_lobby(data):
         emit('error', {'error': 'Errore nel lasciare la lobby.'})
 
 @socketio.on('start_game')
-@jwt_required()
 def handle_start_game(data):
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
+        if not current_user_id:
+            emit('error', {'error': 'Utente non autenticato.'})
+            return
+
         lobby_id_text = data.get('lobby_id')
 
         if not lobby_id_text:
@@ -382,10 +425,13 @@ def handle_start_game(data):
         emit('error', {'error': 'Errore nell\'avviare il gioco.'})
 
 @socketio.on('toggle_ready')
-@jwt_required()
 def handle_toggle_ready(data):
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
+        if not current_user_id:
+            emit('error', {'error': 'Utente non autenticato.'})
+            return
+
         lobby_id_text = data.get('lobby_id')
 
         # Recupera la lobby
@@ -403,63 +449,23 @@ def handle_toggle_ready(data):
                 .eq('user_id', current_user_id) \
                 .execute()
 
-        # Avvisa tutti della lobby aggiornata (riutilizza la funzione esistente di broadcast se preferisci)
+        # Avvisa tutti della lobby aggiornata
         broadcast_lobbies()
     except Exception as e:
         logger.error(f"Errore toggle_ready: {e}")
         emit('error', {'error': 'Errore nel cambiare stato pronto.'})
 
-@socketio.on('get_lobbies')
-@jwt_required()
-def handle_get_lobbies():
-    try:
-        data = get_all_lobbies_from_db()
-        emit('update_lobbies', {'lobbies': data})
-    except Exception as e:
-        logger.error(f"Errore get_lobbies: {e}")
-        emit('error', {'error': 'Errore nel recuperare le lobby.'})
-
-
-# ======== STRUTTURA DATI PER LE VOTAZIONI IN MEMORIA =========
-lobby_votes = {}
-
-
-# Formato: {
-#   lobby_id (string): {
-#       "numPlayers": 2 (numero TOT di player in lobby),
-#       "votes": {
-#           user_id (uuid/str): "facile"|"medio"|"difficile"
-#       }
-#   }
-# }
-
-# Funzione d'appoggio per recuperare num. player della lobby
-def get_number_of_players(lobby_uuid):
-    """
-    Ritorna quanti giocatori risultano in lobby_players per la lobby 'lobby_uuid'
-    """
-    resp = supabase.table("lobby_players").select("user_id", count='exact').eq("lobby_id", lobby_uuid).execute()
-    return resp.count if resp.count else 0
-
-
-# Emissione risultato
-def broadcast_vote_result(lobby_id, mode_chosen):
-    # Manda a tutti i client nella room = lobby_id
-    socketio.emit(
-        'vote_result',
-        {"mode_chosen": mode_chosen},
-        to=lobby_id
-    )
-
-
 @socketio.on('vote_mode')
-@jwt_required()
 def handle_vote_mode(data):
     """
     data: { "lobby_id": "...", "mode": "facile|medio|difficile" }
     """
     try:
-        current_user_id = get_jwt_identity()  # ID/UUID dell'utente
+        current_user_id = get_current_user_id()
+        if not current_user_id:
+            emit('error', {'error': 'Utente non autenticato.'})
+            return
+
         lobby_id_text = data.get('lobby_id')
         chosen_mode = data.get('mode')
 
@@ -468,7 +474,6 @@ def handle_vote_mode(data):
             return
 
         # Recupera la lobby dal DB
-        # (In 'lobbies' la colonna 'lobby_id' è un testo, la PK è 'id' = uuid)
         resp = supabase.table('lobbies').select('id').eq('lobby_id', lobby_id_text).execute()
         if not resp.data:
             emit('error', {'error': 'Lobby non trovata.'})
@@ -487,8 +492,22 @@ def handle_vote_mode(data):
         lobby_votes[lobby_id_text]["votes"][current_user_id] = chosen_mode
         logging.info(f"Voto: utente={current_user_id}, lobby={lobby_id_text}, mode={chosen_mode}")
 
-        # Se TUTTI i player di questa lobby hanno votato:
+        # Calcola i conteggi dei voti attuali
         votes_dict = lobby_votes[lobby_id_text]["votes"]
+        vote_counts = {"facile": 0, "medio": 0, "difficile": 0}
+        for vote in votes_dict.values():
+            if vote in vote_counts:
+                vote_counts[vote] += 1
+
+        # Emissione aggiornamento voti a tutti i client nella lobby
+        socketio.emit(
+            'vote_update',
+            {"vote_counts": vote_counts},
+            to=lobby_id_text
+        )
+        logging.info(f"Aggiornamento voti inviato per la lobby {lobby_id_text}: {vote_counts}")
+
+        # Se TUTTI i player di questa lobby hanno votato:
         total_players = lobby_votes[lobby_id_text]["numPlayers"]
         if len(votes_dict) == total_players and total_players > 0:
             # Calcola la modalità vincente
@@ -519,14 +538,46 @@ def handle_vote_mode(data):
         logging.error(f"Errore in vote_mode: {e}")
         emit('error', {'error': 'Errore interno in vote_mode.'})
 
+# ======== STRUTTURA DATI PER LE VOTAZIONI IN MEMORIA =========
+lobby_votes = {}
+# Formato: {
+#   lobby_id (string): {
+#       "numPlayers": 2 (numero TOT di player in lobby),
+#       "votes": {
+#           user_id (uuid/str): "facile"|"medio"|"difficile"
+#       }
+#   }
+# }
+
+# Funzione d'appoggio per recuperare num. player della lobby
+def get_number_of_players(lobby_uuid):
+    """
+    Ritorna quanti giocatori risultano in lobby_players per la lobby 'lobby_uuid'
+    """
+    resp = supabase.table("lobby_players").select("user_id", count='exact').eq("lobby_id", lobby_uuid).execute()
+    return resp.count if resp.count else 0
+
+# Emissione risultato
+def broadcast_vote_result(lobby_id, mode_chosen):
+    # Manda a tutti i client nella room = lobby_id
+    socketio.emit(
+        'vote_result',
+        {"mode_chosen": mode_chosen},
+        to=lobby_id
+    )
+
+# Emissione evento 'start_timer' quando tutti i giocatori sono pronti
 player_screen_map = {}
 # struttura: { "LOBBY_ID": set([user1, user2, ...]) }
 
 @socketio.on('player_on_game_screen')
-@jwt_required()
 def handle_player_on_game_screen(data):
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
+        if not current_user_id:
+            emit('error', {'error': 'Utente non autenticato.'})
+            return
+
         lobby_id_text = data.get('lobby_id')
         if not lobby_id_text:
             emit('error', {'error': 'Lobby non valida.'})
@@ -581,7 +632,6 @@ def handle_player_on_game_screen(data):
     except Exception as e:
         logger.error(f"Errore in player_on_game_screen: {e}")
         emit('error', {'error': 'Errore nel segnalare player_on_game_screen.'})
-
 
 #################### ENDPOINTS HTTP DI SERVIZIO ####################
 
@@ -691,9 +741,10 @@ def genera_parole(modalita):
         return []
 
     prompt = (
-        f"Genera una lista di 10 parole uniche. "
-        f"Lunghezza tra {lmin} e {lmax} caratteri, no accenti. "
-        f"In formato lista numerata."
+        f"Genera una lista di 10 parole uniche e significative. "
+        f"Le parole devono avere una lunghezza compresa tra {lmin} e {lmax} caratteri. "
+        f"Le parole non devono contenere accenti (come à, è, ò, ù) o caratteri speciali come simboli o numeri. "
+        f"Rispondi in formato lista numerata con parole di senso compiuto e che esistono."
     )
     logger.info(f"Prompt generato: {prompt}")
     try:
@@ -839,6 +890,78 @@ def get_user():
         logger.error(f"Errore get_user: {e}")
         return jsonify({'error': 'Errore interno del server.'}), 500
 
+
+@app.route('/leaderboard', methods=['GET'])
+@jwt_required()
+def get_leaderboard():
+    try:
+        current_user_id = get_jwt_identity()
+        logger.info(f"Recupero della classifica per l'utente ID: {current_user_id}")
+
+        # Recupera tutti gli utenti ordinati per punti decrescenti
+        response = supabase.table('users').select('id, username, points').order('points', desc=True).execute()
+
+        # Log della risposta per debug
+        logger.debug(f"Response data: {response.data}")
+
+        # Verifica se la risposta contiene dati
+        if response.data is None:
+            logger.error("La risposta di Supabase non contiene dati.")
+            return jsonify({'error': 'Errore nel recupero leaderboard.'}), 500
+
+        users = response.data  # Lista di dizionari con 'id', 'username', 'points'
+
+        leaderboard = []
+        your_rank = None
+        your_points = None
+
+        for index, user in enumerate(users, start=1):
+            leaderboard.append({
+                'username': user['username'],
+                'points': user['points']
+            })
+            if user['id'] == current_user_id:
+                your_rank = index
+                your_points = user['points']
+
+        logger.info(f"Classifica recuperata con successo. Rango utente: {your_rank}")
+
+        return jsonify({
+            'leaderboard': leaderboard,
+            'your_rank': your_rank,
+            'your_points': your_points
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Errore in get_leaderboard: {e}")
+        return jsonify({'error': 'Errore interno del server.'}), 500
+def reset_server_state():
+    """Elimina tutte le lobby e disconnette tutti gli utenti all'avvio del server."""
+    try:
+        # Elimina tutte le lobby dove 'lobby_id' non è vuoto
+        response_lobbies = supabase.table('lobbies').delete().neq('lobby_id', '').execute()
+
+        # Verifica se l'eliminazione delle lobby è andata a buon fine
+        if response_lobbies.status_code == 200:
+            logger.info("Tutte le lobby sono state eliminate.")
+        else:
+            logger.error(f"Errore nell'eliminazione di 'lobbies': {response_lobbies.json()}")
+
+        # Non è necessario eliminare 'lobby_players' manualmente grazie a 'ON DELETE CASCADE'
+
+        # Emissione evento di disconnessione a tutti i client
+        socketio.emit('force_disconnect', {'message': 'Server riavviato. Sei stato disconnesso.'})
+        logger.info("Tutti gli utenti sono stati disconnessi.")
+    except AttributeError as ae:
+        # Gestione specifica per AttributeError
+        logger.error(f"Errore attributo nella risposta Supabase: {ae}")
+    except Exception as e:
+        logger.error(f"Errore nel reset dello stato del server: {e}")
+
+
 if __name__ == '__main__':
+    logger.info("Reset dello stato del server in corso...")
+    reset_server_state()  # Ripulisce le lobby e disconnette gli utenti all'avvio
+
     logger.info("Avvio del server Flask con SocketIO...")
     socketio.run(app, host='0.0.0.0', port=5001)
