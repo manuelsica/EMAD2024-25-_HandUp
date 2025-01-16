@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'lobby.dart';
 import 'backend_config.dart';
+import 'user.dart';
 
 class SocketService {
   IO.Socket? socket; //opzionale
