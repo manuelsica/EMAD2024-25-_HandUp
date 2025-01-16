@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart'; // Importa Provider
+import 'dart:io';
 import 'package:provider/provider.dart';
 import 'sidemenu.dart';
 import 'game_screen_spelling.dart';
@@ -25,6 +29,12 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     super.initState();
+    if (Platform.isIOS) {
+      SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.manual,
+        overlays: [SystemUiOverlay.top],
+      );
+    }
     _loadUserData();
   }
 
@@ -45,8 +55,8 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async => false,
+    return PopScope(
+      canPop: false,
       child: Scaffold(
         drawer: SideMenu(),
         body: Consumer<SocketService>(

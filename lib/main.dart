@@ -1,5 +1,7 @@
 // lib/main.dart
 
+import 'dart:math';
+import "dart:io";
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart'; // Importa Provider
@@ -16,6 +18,12 @@ import 'risultati_partita.dart'; // Assicurati di avere questa schermata
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  if (Platform.isIOS) {
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.manual,
+      overlays: [SystemUiOverlay.top],
+    );
+  }
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -63,10 +71,7 @@ class LandingPageScreen extends StatelessWidget {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return WillPopScope(
-      onWillPop: () async {
-        // Blocca il gesto di swipe back e il pulsante di sistema
-        return false;
-      },
+      onWillPop: () async => false,
       child: Scaffold(
         body: SafeArea(
           child: Center(
