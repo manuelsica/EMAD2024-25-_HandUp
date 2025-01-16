@@ -66,6 +66,9 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
 
   late SocketService socketService;
 
+  final FocusNode _textFieldFocusNodeNome = FocusNode();
+  final FocusNode _textFieldFocusNodePass = FocusNode();
+
   @override
   void initState() {
     super.initState();
@@ -145,11 +148,16 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
   @override
   void dispose() {
     _controller.dispose();
+    _textFieldFocusNodeNome.dispose();
+    _textFieldFocusNodePass.dispose();
     super.dispose();
   }
 
   /// Chiude il container di creazione con animazione
   void _toggleContainer() {
+    FocusScope.of(context).unfocus();
+    _textFieldFocusNodeNome.unfocus();
+    _textFieldFocusNodePass.unfocus();
     setState(() {
       _isContainerVisible = !_isContainerVisible;
       if (_isContainerVisible) {
@@ -180,7 +188,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
   /// Crea la lobby
   void _createLobby() async {
     // Chiudiamo l’eventuale tastiera
-    FocusScope.of(context).unfocus();
+    // FocusScope.of(context).unfocus();
 
     if (_lobbyName.isEmpty) {
       _showMessage('Il nome della lobby è obbligatorio.', isError: true);
@@ -346,7 +354,11 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
     final screenHeight = MediaQuery.of(context).size.height;
 
     return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(), // Tocca sfondo -> chiude tastiera
+      onTap: () {
+        FocusScope.of(context).unfocus();
+        _textFieldFocusNodeNome.unfocus();
+        _textFieldFocusNodePass.unfocus();
+      },  // Tocca sfondo -> chiude tastiera
       child: Scaffold(
         drawer: SideMenu(),
         body: SafeArea(
@@ -546,6 +558,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                             ),
                             const SizedBox(height: 20),
                             TextField(
+                              focusNode: _textFieldFocusNodeNome,
                               decoration: InputDecoration(
                                 hintText: 'Nome della lobby',
                                 hintStyle: const TextStyle(color: Colors.white70),
@@ -616,6 +629,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                             ),
                             const SizedBox(height: 20),
                             TextField(
+                              focusNode: _textFieldFocusNodePass,
                               decoration: InputDecoration(
                                 hintText: 'Password (opzionale)',
                                 hintStyle: const TextStyle(color: Colors.white70),

@@ -52,6 +52,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController    = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  final FocusNode _textFieldFocusNodeMail = FocusNode();
+  final FocusNode _textFieldFocusNodePass = FocusNode();
+
   final storage = FlutterSecureStorage(); 
 
   bool _isLoading = false;
@@ -162,6 +165,8 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _textFieldFocusNodeMail.dispose();
+    _textFieldFocusNodePass.dispose();
     super.dispose();
   }
 
@@ -170,192 +175,201 @@ class _LoginScreenState extends State<LoginScreen> {
     final screenWidth  = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
-    return WillPopScope(
-      onWillPop: () async {
-        if (_allowPop) {
-          // Reset the flag and allow pop
-          _allowPop = false;
-          return true;
-        }
-        // Blocca il pop (impedisce lo swipe back)
-        return false;
-      },
-      child: Scaffold(
-        backgroundColor: AppColors.backgroundColor,
-        appBar: AppBar(
-          title: AppColors.gradientText('Login', screenWidth * 0.05),
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+        _textFieldFocusNodeMail.unfocus();
+        _textFieldFocusNodePass.unfocus();
+      }, // Tocca sfondo -> chiude tastiera
+      child: WillPopScope(
+        onWillPop: () async {
+          if (_allowPop) {
+            // Reset the flag and allow pop
+            _allowPop = false;
+            return true;
+          }
+          // Blocca il pop (impedisce lo swipe back)
+          return false;
+        },
+        child: Scaffold(
           backgroundColor: AppColors.backgroundColor,
-          elevation: 0,
-          leading: IconButton(
-            icon: CustomPaint(
-              size: const Size(45, 45),
-              painter: GradientIconPainter(
-                icon: Icons.arrow_back,
-                gradient: AppColors.textGradient,
+          appBar: AppBar(
+            title: AppColors.gradientText('Login', screenWidth * 0.05),
+            backgroundColor: AppColors.backgroundColor,
+            elevation: 0,
+            leading: IconButton(
+              icon: CustomPaint(
+                size: const Size(45, 45),
+                painter: GradientIconPainter(
+                  icon: Icons.arrow_back,
+                  gradient: AppColors.textGradient,
+                ),
               ),
+              onPressed: () {
+                setState(() {
+                  _allowPop = true;
+                });
+                Navigator.of(context).pop();
+              },
             ),
-            onPressed: () {
-              setState(() {
-                _allowPop = true;
-              });
-              Navigator.of(context).pop();
-            },
           ),
-        ),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
-                child: Column(
-                  children: [
-                    SizedBox(height: screenHeight * 0.02),
-                    // Logo
-                    Container(
-                      margin: EdgeInsets.only(
-                        top: screenHeight * 0.08,
-                        bottom: screenHeight * 0.01,
-                      ),
-                      child: Image.asset(
-                        'assets/logo_handup.png',
-                        width: screenWidth * 1,
-                        height: screenHeight * 0.35,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          print('Error loading image: $error');
-                          return Icon(Icons.error,
-                              size: screenWidth * 0.8, color: Colors.red);
-                        },
-                      ),
-                    ),
-                    // Email
-                    Container(
-                      width: screenWidth * 0.8,
-                      margin: EdgeInsets.only(top: screenHeight * 0.02),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: TextField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          hintText: 'Email',
-                          hintStyle: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
-                            fontSize: screenWidth * 0.04,
-                          ),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 15,
-                          ),
+          body: SafeArea(
+            child: SingleChildScrollView(
+              child: Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
+                  child: Column(
+                    children: [
+                      SizedBox(height: screenHeight * 0.02),
+                      // Logo
+                      Container(
+                        margin: EdgeInsets.only(
+                          top: screenHeight * 0.08,
+                          bottom: screenHeight * 0.01,
+                        ),
+                        child: Image.asset(
+                          'assets/logo_handup.png',
+                          width: screenWidth * 1,
+                          height: screenHeight * 0.35,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            print('Error loading image: $error');
+                            return Icon(Icons.error,
+                                size: screenWidth * 0.8, color: Colors.red);
+                          },
                         ),
                       ),
-                    ),
-                    // Password
-                    Container(
-                      width: screenWidth * 0.8,
-                      margin: EdgeInsets.only(top: screenHeight * 0.02),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: TextField(
-                        controller: _passwordController,
-                        obscureText: true,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          hintText: 'Password',
-                          hintStyle: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
-                            fontSize: screenWidth * 0.04,
-                          ),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 15,
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Bottone Login
-                    Container(
-                      margin: EdgeInsets.only(top: screenHeight * 0.025),
-                      width: screenWidth * 0.5,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.textColor1.withOpacity(0.5),
-                            blurRadius: 20,
-                            spreadRadius: 2,
-                          ),
-                        ],
-                      ),
-                      child: Container(
+                      // Email
+                      Container(
+                        width: screenWidth * 0.8,
+                        margin: EdgeInsets.only(top: screenHeight * 0.02),
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [
-                              Color.fromARGB(110, 214, 57, 196),
-                              Color.fromARGB(110, 255, 0, 208),
-                              Color.fromARGB(110, 140, 53, 232),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
+                          color: Colors.white.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(30),
                         ),
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.1,
-                              vertical: screenHeight * 0.015,
+                        child: TextField(
+                          focusNode: _textFieldFocusNodeMail,
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            hintText: 'Email',
+                            hintStyle: TextStyle(
+                              color: Colors.white.withOpacity(0.5),
+                              fontSize: screenWidth * 0.04,
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 15,
                             ),
-                            elevation: 0,
-                            shadowColor: Colors.transparent,
                           ),
-                          onPressed: _isLoading ? null : _login,
-                          child: _isLoading
-                              ? SizedBox(
-                                  width: screenWidth * 0.05,
-                                  height: screenWidth * 0.05,
-                                  child: const CircularProgressIndicator(
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                    strokeWidth: 2.0,
-                                  ),
-                                )
-                              : Text(
-                                  'Entra',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: screenWidth * 0.045,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
                         ),
                       ),
-                    ),
-                    // Link per registrarsi
-                    SizedBox(height: screenHeight * 0.02),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => const RegistrationPage()),
-                        );
-                      },
-                      child: AppColors.gradientText(
-                        'Non hai un account? Registrati',
-                        screenWidth * 0.035,
+                      // Password
+                      Container(
+                        width: screenWidth * 0.8,
+                        margin: EdgeInsets.only(top: screenHeight * 0.02),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: TextField(
+                          focusNode: _textFieldFocusNodePass,
+                          controller: _passwordController,
+                          obscureText: true,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            hintText: 'Password',
+                            hintStyle: TextStyle(
+                              color: Colors.white.withOpacity(0.5),
+                              fontSize: screenWidth * 0.04,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 15,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
+                      // Bottone Login
+                      Container(
+                        margin: EdgeInsets.only(top: screenHeight * 0.025),
+                        width: screenWidth * 0.5,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(30),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.textColor1.withOpacity(0.5),
+                              blurRadius: 20,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color.fromARGB(110, 214, 57, 196),
+                                Color.fromARGB(110, 255, 0, 208),
+                                Color.fromARGB(110, 140, 53, 232),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: screenWidth * 0.1,
+                                vertical: screenHeight * 0.015,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              elevation: 0,
+                              shadowColor: Colors.transparent,
+                            ),
+                            onPressed: _isLoading ? null : _login,
+                            child: _isLoading
+                                ? SizedBox(
+                                    width: screenWidth * 0.05,
+                                    height: screenWidth * 0.05,
+                                    child: const CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                      strokeWidth: 2.0,
+                                    ),
+                                  )
+                                : Text(
+                                    'Entra',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: screenWidth * 0.045,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ),
+                      // Link per registrarsi
+                      SizedBox(height: screenHeight * 0.02),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => const RegistrationPage()),
+                          );
+                        },
+                        child: AppColors.gradientText(
+                          'Non hai un account? Registrati',
+                          screenWidth * 0.035,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

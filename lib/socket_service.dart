@@ -183,7 +183,7 @@ class SocketService {
       }
 
       final response = await http.get(
-        Uri.parse('${BackendConfig.baseUrl}/lobbies'),
+        Uri.parse(BackendConfig.lobbiesUrl),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -215,7 +215,7 @@ class SocketService {
       }
 
       final response = await http.get(
-        Uri.parse('${BackendConfig.baseUrl}/leaderboard'),
+        Uri.parse(BackendConfig.leaderboardUrl),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
