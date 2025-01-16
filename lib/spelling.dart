@@ -12,7 +12,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'risultati_partita.dart'; // Assicurati di avere questa schermata
+import 'risultati_partita.dart';
 import 'backend_config.dart';
 import 'socket_service.dart';
 
@@ -121,8 +121,8 @@ class _GameScreenSpellingState extends State<GameScreenSpelling> {
     _cameraController.startImageStream((CameraImage image) async {
       final now = DateTime.now();
 
-      // Processa un frame solo ogni 500 ms
-      if (_isProcessing || now.difference(_lastSent).inMilliseconds < 500) {
+      // Processa un frame solo ogni 1000 ms
+      if (_isProcessing || now.difference(_lastSent).inMilliseconds < 1000) {
         return;
       }
 

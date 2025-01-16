@@ -44,14 +44,18 @@ class RegistrationScreen extends StatefulWidget {
 }
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
-  final TextEditingController _usernameController       = TextEditingController();
-  final TextEditingController _emailController          = TextEditingController();
-  final TextEditingController _passwordController       = TextEditingController();
-  final TextEditingController _confirmPasswordController= TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   final FlutterSecureStorage storage = const FlutterSecureStorage();
 
   bool _isLoading = false;
+
+  // Variabile per controllare se consentire il pop
+  bool _allowPop = false;
 
   void _showMessage(String message, {bool isError = false}) {
     showDialog(
@@ -61,7 +65,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         content: Text(message),
         actions: [
           TextButton(
-            onPressed: () { Navigator.of(ctx).pop(); },
+            onPressed: () {
+              Navigator.of(ctx).pop();
+            },
             child: const Text('OK'),
           ),
         ],
@@ -73,11 +79,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     setState(() => _isLoading = true);
 
     final username = _usernameController.text.trim();
-    final email    = _emailController.text.trim();
+    final email = _emailController.text.trim();
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
 
-    if (username.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+    if (username.isEmpty ||
+        email.isEmpty ||
+        password.isEmpty ||
+        confirmPassword.isEmpty) {
       _showMessage('Per favore, compila tutti i campi.', isError: true);
       setState(() => _isLoading = false);
       return;
@@ -117,8 +126,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       if (response.statusCode == 201) {
         // Leggiamo i campi dal server
         final accessToken = responseData['access_token'];
-        final userId      = responseData['user_id'];   // <-- user_id
-        final points      = responseData['points']     ?? 0;
+        final userId = responseData['user_id']; // <-- user_id
+        final points = responseData['points'] ?? 0;
         final returnedUsername = responseData['username'] ?? username;
 
         print('Access Token Received: $accessToken');
@@ -128,9 +137,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
         if (accessToken != null && userId != null) {
           await storage.write(key: 'access_token', value: accessToken);
-          await storage.write(key: 'user_id',      value: userId.toString());
-          await storage.write(key: 'username',     value: returnedUsername);
-          await storage.write(key: 'points',       value: points.toString());
+          await storage.write(key: 'user_id', value: userId.toString());
+          await storage.write(key: 'username', value: returnedUsername);
+          await storage.write(key: 'points', value: points.toString());
 
           _showMessage('Registrazione avvenuta con successo.');
           Navigator.pushReplacement(
@@ -138,10 +147,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             MaterialPageRoute(builder: (context) => const Home()),
           );
         } else {
-          _showMessage('Token o ID utente non ricevuti dal server.', isError: true);
+          _showMessage('Token o ID utente non ricevuti dal server.',
+              isError: true);
         }
       } else {
-        _showMessage(responseData['error'] ?? 'Errore durante la registrazione.', isError: true);
+        _showMessage(
+            responseData['error'] ?? 'Errore durante la registrazione.',
+            isError: true);
       }
     } catch (error) {
       print('Errore di connessione: $error');
@@ -162,222 +174,239 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth  = MediaQuery.of(context).size.width;
+    final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
-    return Scaffold(
-      backgroundColor: AppColors.backgroundColor,
-      appBar: AppBar(
-        title: AppColors.gradientText('Registrazione', screenWidth * 0.05),
+    return WillPopScope(
+      onWillPop: () async {
+        if (_allowPop) {
+          // Reset della variabile e consentiamo il pop
+          _allowPop = false;
+          return true;
+        }
+        // Blocchiamo il pop (impediamo lo swipe back)
+        return false;
+      },
+      child: Scaffold(
         backgroundColor: AppColors.backgroundColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: CustomPaint(
-            size: const Size(45, 45),
-            painter: GradientIconPainter(
-              icon: Icons.arrow_back,
-              gradient: AppColors.textGradient,
+        appBar: AppBar(
+          title: AppColors.gradientText('Registrazione', screenWidth * 0.05),
+          backgroundColor: AppColors.backgroundColor,
+          elevation: 0,
+          leading: IconButton(
+            icon: CustomPaint(
+              size: const Size(45, 45),
+              painter: GradientIconPainter(
+                icon: Icons.arrow_back,
+                gradient: AppColors.textGradient,
+              ),
             ),
+            onPressed: () {
+              setState(() {
+                _allowPop = true;
+              });
+              Navigator.of(context).pop();
+            },
           ),
-          onPressed: () => Navigator.of(context).pop(),
         ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Center(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Logo
-                  Container(
-                    margin: EdgeInsets.only(
-                      top: screenHeight * 0.08,
-                      bottom: screenHeight * 0.01,
-                    ),
-                    child: Image.asset(
-                      'assets/logo_handup.png',
-                      width: screenWidth * 1,
-                      height: screenHeight * 0.35,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        print('Error loading image: $error');
-                        return Icon(Icons.error,
-                            size: screenWidth * 0.8, color: Colors.red);
-                      },
-                    ),
-                  ),
-
-                  // Username
-                  Container(
-                    width: screenWidth * 0.8,
-                    margin: EdgeInsets.only(top: screenHeight * 0.02),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: TextField(
-                      controller: _usernameController,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        hintText: 'Username',
-                        hintStyle: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
-                          fontSize: screenWidth * 0.04,
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 15,
-                        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Logo
+                    Container(
+                      margin: EdgeInsets.only(
+                        top: screenHeight * 0.08,
+                        bottom: screenHeight * 0.01,
+                      ),
+                      child: Image.asset(
+                        'assets/logo_handup.png',
+                        width: screenWidth * 1,
+                        height: screenHeight * 0.35,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          print('Error loading image: $error');
+                          return Icon(Icons.error,
+                              size: screenWidth * 0.8, color: Colors.red);
+                        },
                       ),
                     ),
-                  ),
 
-                  // Email
-                  Container(
-                    width: screenWidth * 0.8,
-                    margin: EdgeInsets.only(top: screenHeight * 0.02),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: TextField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        hintText: 'Email',
-                        hintStyle: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
-                          fontSize: screenWidth * 0.04,
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 15,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Password
-                  Container(
-                    width: screenWidth * 0.8,
-                    margin: EdgeInsets.only(top: screenHeight * 0.02),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: TextField(
-                      controller: _passwordController,
-                      obscureText: true,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        hintText: 'Password',
-                        hintStyle: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
-                          fontSize: screenWidth * 0.04,
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 15,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Conferma Password
-                  Container(
-                    width: screenWidth * 0.8,
-                    margin: EdgeInsets.only(top: screenHeight * 0.02),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: TextField(
-                      controller: _confirmPasswordController,
-                      obscureText: true,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        hintText: 'Conferma Password',
-                        hintStyle: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
-                          fontSize: screenWidth * 0.04,
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 15,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Bottone Registrati
-                  Container(
-                    margin: EdgeInsets.only(top: screenHeight * 0.025),
-                    width: screenWidth * 0.5,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(30),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.textColor1.withOpacity(0.5),
-                          blurRadius: 20,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                    child: Container(
+                    // Username
+                    Container(
+                      width: screenWidth * 0.8,
+                      margin: EdgeInsets.only(top: screenHeight * 0.02),
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [
-                            Color.fromARGB(110, 214, 57, 196),
-                            Color.fromARGB(110, 255, 0, 208),
-                            Color.fromARGB(110, 140, 53, 232)
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
+                        color: Colors.white.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(30),
                       ),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          padding: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.1,
-                            vertical: screenHeight * 0.015,
+                      child: TextField(
+                        controller: _usernameController,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: 'Username',
+                          hintStyle: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                            fontSize: screenWidth * 0.04,
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 15,
                           ),
-                          elevation: 0,
-                          shadowColor: Colors.transparent,
                         ),
-                        onPressed: _isLoading ? null : _register,
-                        child: _isLoading
-                            ? SizedBox(
-                                width: screenWidth * 0.05,
-                                height: screenWidth * 0.05,
-                                child: const CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                  strokeWidth: 2.0,
-                                ),
-                              )
-                            : Text(
-                                'Registrati',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: screenWidth * 0.045,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
                       ),
                     ),
-                  ),
-                ],
+
+                    // Email
+                    Container(
+                      width: screenWidth * 0.8,
+                      margin: EdgeInsets.only(top: screenHeight * 0.02),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: TextField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: 'Email',
+                          hintStyle: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                            fontSize: screenWidth * 0.04,
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 15,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Password
+                    Container(
+                      width: screenWidth * 0.8,
+                      margin: EdgeInsets.only(top: screenHeight * 0.02),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: TextField(
+                        controller: _passwordController,
+                        obscureText: true,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: 'Password',
+                          hintStyle: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                            fontSize: screenWidth * 0.04,
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 15,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Conferma Password
+                    Container(
+                      width: screenWidth * 0.8,
+                      margin: EdgeInsets.only(top: screenHeight * 0.02),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: TextField(
+                        controller: _confirmPasswordController,
+                        obscureText: true,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: 'Conferma Password',
+                          hintStyle: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                            fontSize: screenWidth * 0.04,
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 15,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Bottone Registrati
+                    Container(
+                      margin: EdgeInsets.only(top: screenHeight * 0.025),
+                      width: screenWidth * 0.5,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(30),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.textColor1.withOpacity(0.5),
+                            blurRadius: 20,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color.fromARGB(110, 214, 57, 196),
+                              Color.fromARGB(110, 255, 0, 208),
+                              Color.fromARGB(110, 140, 53, 232)
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: screenWidth * 0.1,
+                              vertical: screenHeight * 0.015,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            elevation: 0,
+                            shadowColor: Colors.transparent,
+                          ),
+                          onPressed: _isLoading ? null : _register,
+                          child: _isLoading
+                              ? SizedBox(
+                                  width: screenWidth * 0.05,
+                                  height: screenWidth * 0.05,
+                                  child: const CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white),
+                                    strokeWidth: 2.0,
+                                  ),
+                                )
+                              : Text(
+                                  'Registrati',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: screenWidth * 0.045,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

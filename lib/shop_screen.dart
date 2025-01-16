@@ -4,14 +4,53 @@ import "sidemenu.dart";
 import "app_colors.dart";
 import "top_bar.dart";
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart'; 
 
-class ShopScreen extends StatelessWidget {
+class ShopScreen extends StatefulWidget { 
   const ShopScreen({Key? key}) : super(key: key);
+
+  @override
+  _ShopScreenState createState() => _ShopScreenState();
+}
+
+class _ShopScreenState extends State<ShopScreen> {
+  final FlutterSecureStorage storage = const FlutterSecureStorage();
+  String username = 'Username';
+  int points = 0;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    String? usernameFromStorage = await storage.read(key: 'username');
+    String? pointsStr = await storage.read(key: 'points');
+    int pointsFromStorage = 0;
+    if (pointsStr != null) {
+      pointsFromStorage = int.tryParse(pointsStr) ?? 0;
+    }
+
+    setState(() {
+      username = usernameFromStorage ?? 'Username';
+      points = pointsFromStorage;
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
+
+    if (isLoading) {
+      return Scaffold(
+        drawer: SideMenu(),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       drawer: SideMenu(),
@@ -23,9 +62,9 @@ class ShopScreen extends StatelessWidget {
           child: Column(
             children: [
               // TopBar con username e punti
-              const TopBar(
-                username: "Username",
-                points: 000,
+              TopBar(
+                username: username, // Usa l'username dinamico
+                points: points,     // Usa i punti dinamici
                 showMenu: true,
                 showUser: true,
               ),
@@ -122,7 +161,7 @@ class ShopScreen extends StatelessWidget {
                 screenWidth * 0.06,
               ),
               Text(
-                "120",
+                "$points",
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: screenWidth * 0.1,

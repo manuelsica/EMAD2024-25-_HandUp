@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 import "app_colors.dart";
 import 'package:google_fonts/google_fonts.dart';
-import "sidemenu.dart"; // Import del menu laterale
+import "sidemenu.dart"; 
 import 'package:hand_up_interface/risultati_singleplayer.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import "top_bar.dart";
@@ -111,7 +111,7 @@ class _GameScreenState extends State<GameScreen>
       final now = DateTime.now();
 
       // Processa un frame solo ogni 500 ms
-      if (_isProcessing || now.difference(_lastSent).inMilliseconds < 500) {
+      if (_isProcessing || now.difference(_lastSent).inMilliseconds < 1000) {
         return;
       }
 

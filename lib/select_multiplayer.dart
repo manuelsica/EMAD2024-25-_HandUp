@@ -1,15 +1,15 @@
-// lib/modalita_screen.dart
+// lib/select_multiplayer.dart
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart'; 
 import 'package:provider/provider.dart';
-
-import 'spelling.dart'; // Assicurati di avere questa schermata
+import 'package:animate_do/animate_do.dart';
+import 'spelling.dart'; 
 import 'app_colors.dart';
 import 'backend_config.dart';
-import 'socket_service.dart'; // Importa il tuo servizio SocketService
+import 'socket_service.dart'; 
 
 class ModalitaScreen extends StatefulWidget {
   // Ricevi la lobbyId, così sai a quale lobby appartieni
@@ -28,6 +28,13 @@ class _ModalitaScreenState extends State<ModalitaScreen> {
   bool _hasVoted = false;       // Per evitare doppi voti
   bool _waitingResult = false;  // Per mostrare un eventuale caricamento
   String? _finalMode;           // La modalità vincente (se già disponibile)
+  
+  // Stato per i conteggi dei voti
+  Map<String, int> _voteCounts = {
+    "facile": 0,
+    "medio": 0,
+    "difficile": 0,
+  };
 
   @override
   void initState() {
@@ -43,6 +50,13 @@ class _ModalitaScreenState extends State<ModalitaScreen> {
       });
       // Una volta che sappiamo la "modeChosen", prendiamo le parole e navighiamo
       _navigateToGameScreen(modeChosen);
+    });
+
+    // Ascolta l'evento "vote_update" per aggiornare i conteggi dei voti
+    socketService.voteUpdateStream.listen((voteCounts) {
+      setState(() {
+        _voteCounts = Map<String, int>.from(voteCounts);
+      });
     });
   }
 
@@ -116,13 +130,20 @@ class _ModalitaScreenState extends State<ModalitaScreen> {
     }
   }
 
-  // --- Widget personalizzato per i bottoni con gradiente ---
+  // --- Widget personalizzato per i bottoni con gradiente e animazioni ---
   Widget buildGradientButton(BuildContext context, String label, String difficulty, IconData iconData) {
-    return GradientButton(
-      label: label,
-      difficulty: difficulty,
-      iconData: iconData,
-      onPressed: () => _voteMode(difficulty), // Invoca la funzione di voto
+    // Recupera il numero di voti per questa modalità
+    int voteCount = _voteCounts[difficulty] ?? 0;
+
+    return FadeInUp(
+      duration: const Duration(milliseconds: 500),
+      child: GradientButton(
+        label: label,
+        difficulty: difficulty,
+        iconData: iconData,
+        voteCount: voteCount, // Passa il numero di voti al bottone
+        onPressed: () => _voteMode(difficulty), // Invoca la funzione di voto
+      ),
     );
   }
 
@@ -135,7 +156,7 @@ class _ModalitaScreenState extends State<ModalitaScreen> {
         elevation: 0,
         centerTitle: true,
         title: AppColors.gradientText(
-          "Seleziona Modalità",
+          "Vota Difficoltà", // Titolo aggiornato
           26.0,
         ),
       ),
@@ -151,15 +172,23 @@ class _ModalitaScreenState extends State<ModalitaScreen> {
                 buildGradientButton(context, "Difficile", "difficile", Icons.sentiment_dissatisfied),
                 const SizedBox(height: 30),
                 if (_waitingResult) 
-                  const CircularProgressIndicator(
-                    color: Colors.white,
+                  SpinPerfect(
+                    animate: true,
+                    duration: const Duration(seconds: 2),
+                    infinite: true,
+                    child: const CircularProgressIndicator(
+                      color: Colors.white,
+                    ),
                   ),
                 if (_finalMode != null)
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      "Modalità scelta: $_finalMode",
-                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                  FadeIn(
+                    duration: const Duration(milliseconds: 800),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        "Modalità scelta: $_finalMode",
+                        style: const TextStyle(color: Colors.white, fontSize: 18),
+                      ),
                     ),
                   ),
               ],
@@ -171,11 +200,12 @@ class _ModalitaScreenState extends State<ModalitaScreen> {
   }
 }
 
-/// WIDGET PERSONALIZZATO PER L'ANIMAZIONE DEL BOTTONE CON GRADIENTE
+/// WIDGET PERSONALIZZATO PER L'ANIMAZIONE DEL BOTTONE CON GRADIENTE E VOTI
 class GradientButton extends StatefulWidget {
   final String label;
   final String difficulty;
   final IconData iconData;
+  final int voteCount; // Nuovo parametro per i conteggi dei voti
   final VoidCallback onPressed;
 
   const GradientButton({
@@ -183,6 +213,7 @@ class GradientButton extends StatefulWidget {
     required this.label,
     required this.difficulty,
     required this.iconData,
+    required this.voteCount, // Inizializzato nel costruttore
     required this.onPressed,
   }) : super(key: key);
 
@@ -193,6 +224,7 @@ class GradientButton extends StatefulWidget {
 class _GradientButtonState extends State<GradientButton> with SingleTickerProviderStateMixin {
   double _scale = 1.0;
   late AnimationController _controller;
+  late Animation<double> _animation;
 
   @override
   void initState() {
@@ -207,6 +239,8 @@ class _GradientButtonState extends State<GradientButton> with SingleTickerProvid
           _scale = 1 - _controller.value;
         });
       });
+
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
   }
 
   void _onTapDown(TapDownDetails details) {
@@ -232,24 +266,24 @@ class _GradientButtonState extends State<GradientButton> with SingleTickerProvid
   Widget build(BuildContext context) {
     return Transform.scale(
       scale: _scale,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 30.0),
-        decoration: BoxDecoration(
-          gradient: AppColors.containerBorderGradient,
-          borderRadius: BorderRadius.circular(30.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              spreadRadius: 2,
-              blurRadius: 10,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: GestureDetector(
-          onTapDown: _onTapDown,
-          onTapUp: _onTapUp,
-          onTapCancel: _onTapCancel,
+      child: GestureDetector(
+        onTapDown: _onTapDown,
+        onTapUp: _onTapUp,
+        onTapCancel: _onTapCancel,
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 30.0),
+          decoration: BoxDecoration(
+            gradient: AppColors.containerBorderGradient,
+            borderRadius: BorderRadius.circular(30.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                spreadRadius: 2,
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
           child: ElevatedButton(
             onPressed: widget.onPressed,
             style: ElevatedButton.styleFrom(
@@ -261,19 +295,35 @@ class _GradientButtonState extends State<GradientButton> with SingleTickerProvid
               elevation: 0,
               shadowColor: Colors.transparent,
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  widget.iconData,
-                  color: Colors.white,
-                ),
-                const SizedBox(width: 10),
-                AppColors.gradientText(
-                  widget.label,
-                  20.0,
-                ),
-              ],
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              child: Row(
+                key: ValueKey<int>(widget.voteCount),
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    widget.iconData,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(width: 10),
+                  AppColors.gradientText(
+                    widget.label,
+                    20.0,
+                  ),
+                  const SizedBox(width: 10),
+                  // Visualizza il conteggio dei voti con animazione
+                  FadeIn(
+                    duration: const Duration(milliseconds: 500),
+                    child: Text(
+                      "(${widget.voteCount})",
+                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

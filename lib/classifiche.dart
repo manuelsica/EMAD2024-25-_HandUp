@@ -1,9 +1,14 @@
+// lib/classifica.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import "sidemenu.dart";
-import "app_colors.dart";
+import 'sidemenu.dart';
+import 'app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
-import "top_bar.dart";
+import 'top_bar.dart';
+import 'socket_service.dart';
+import 'user.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // Importa FlutterSecureStorage
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +26,7 @@ class LeaderboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false, // Rimuove il banner di debug
       theme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: const Color(0xFF0A0E21),
@@ -31,138 +37,78 @@ class LeaderboardScreen extends StatelessWidget {
   }
 }
 
-class LeaderboardHomeScreen extends StatelessWidget {
+class LeaderboardHomeScreen extends StatefulWidget {
   const LeaderboardHomeScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
+  _LeaderboardHomeScreenState createState() => _LeaderboardHomeScreenState();
+}
 
-    return Scaffold(
-      drawer: SideMenu(),
-      body: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.backgroundColor,
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // App Bar
-              TopBar(
-                  username: "USERNAME",
-                  points: 1000,
-                  showMenu: true,
-                  showUser: true),
-              // Current User Position
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.all(16),
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.purple.shade900.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          '120',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: screenWidth * 0.12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Positioned(
-                    top: 0,
-                    left: 36,
-                    child: AppColors.gradientText("Sei in posizione:", screenWidth * 0.06),
-                  ),
-                ],
-              ),
+class _LeaderboardHomeScreenState extends State<LeaderboardHomeScreen> {
+  final SocketService socketService = SocketService();
+  final FlutterSecureStorage storage = const FlutterSecureStorage(); // Inizializza FlutterSecureStorage
+  List<User> topUsers = [];
+  int? yourRank;
+  int? yourPoints;
+  bool isLoading = true;
+  String username = "USERNAME"; // Questo valore verrà aggiornato dal server o dalla storage
 
-              // Leaderboard Title
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: 
-                  AppColors.gradientText("Classifica Generale:", screenWidth * 0.07)
-                ),
-              ),
-
-              // Leaderboard List
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  children: [
-                    _buildLeaderboardItem(
-                      position: '1',
-                      username: 'PixelGuru',
-                      points: '13324',
-                      avatar: 'P',
-                      screenWidth: screenWidth,
-                      isFirst: true,
-                      screenHeight: screenHeight,
-                    ),
-                    _buildLeaderboardItem(
-                      position: '2',
-                      username: 'AstroWizard',
-                      points: '9742',
-                      avatar: 'A',
-                      screenWidth: screenWidth,
-                      isSecond: true,
-                      screenHeight: screenHeight,
-                    ),
-                    _buildLeaderboardItem(
-                      position: '3',
-                      username: 'NeonNomad',
-                      points: '9542',
-                      avatar: 'N',
-                      screenWidth: screenWidth,
-                      isThird: true,
-                      screenHeight: screenHeight,
-                    ),
-                    _buildLeaderboardItem(
-                      position: '4',
-                      username: 'QuantumTraveler',
-                      points: '9342',
-                      avatar: 'Q',
-                      screenWidth: screenWidth,
-                      screenHeight: screenHeight,
-                    ),
-                    _buildLeaderboardItem(
-                      position: '5',
-                      username: 'MysticCoder',
-                      points: '9442',
-                      avatar: 'M',
-                      screenWidth: screenWidth,
-                      screenHeight: screenHeight,
-                    ),
-                    _buildLeaderboardItem(
-                      position: '6',
-                      username: 'StarryByte',
-                      points: '9342',
-                      avatar: 'S',
-                      screenWidth: screenWidth,
-                      screenHeight: screenHeight,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  @override
+  void initState() {
+    super.initState();
+    socketService.connect(); // Assicurati che la connessione sia stabilita
+    _initializeUserData(); // Inizializza i dati utente
   }
-  //Build the single leaderboard item
+
+  @override
+  void dispose() {
+    socketService.disconnect();
+    super.dispose();
+  }
+
+  /// Inizializza i dati dell'utente recuperando l'username dalla storage
+  Future<void> _initializeUserData() async {
+    // Recupera l'username dalla memorizzazione locale
+    String? storedUsername = await storage.read(key: 'username');
+    int? storedPoints = await storage.read(key: 'points').then((value) => value != null ? int.tryParse(value) : null);
+
+    setState(() {
+      username = storedUsername ?? "USERNAME";
+      yourPoints = storedPoints ?? 0;
+    });
+
+    // Successivamente, recupera la classifica dal server
+    fetchLeaderboard();
+  }
+
+  Future<void> fetchLeaderboard() async {
+    final data = await socketService.fetchLeaderboard();
+    if (data != null) {
+      setState(() {
+        topUsers = (data['leaderboard'] as List)
+            .map((json) => User.fromJson(json))
+            .toList();
+        yourRank = data['your_rank'] as int?;
+        yourPoints = data['your_points'] as int? ?? yourPoints; // Usa i punti dalla classifica se disponibili
+        // Se il server fornisce l'username, aggiorna l'username
+        if (data['your_username'] != null && data['your_username'].toString().isNotEmpty) {
+          username = data['your_username'];
+        }
+        isLoading = false;
+      });
+    } else {
+      // Gestisci l'errore come preferisci, ad esempio mostrando un messaggio
+      setState(() {
+        isLoading = false;
+      });
+      // Opzionale: Mostra un messaggio di errore
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Errore nel recupero della classifica. Riprova più tardi.')),
+      );
+    }
+  }
+
+  // Costruisce un singolo elemento della classifica
   Widget _buildLeaderboardItem({
     required String position,
     required String username,
@@ -197,7 +143,7 @@ class LeaderboardHomeScreen extends StatelessWidget {
           child: Row(
             children: [
               SizedBox(width: avatarSize + 16),
-              //Visualizzazione posizione
+              // Visualizzazione posizione
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -206,30 +152,36 @@ class LeaderboardHomeScreen extends StatelessWidget {
                       padding: EdgeInsets.only(top: isFirst ? 12 : 10),
                       child: Row(
                         children: [
-                          isFirst ? 
-                            AppColors.firstPlaceGradientText(
-                                '$position' + "° Posto", isFirst ? screenWidth * 0.1 : screenWidth * 0.07)
-                          : 
-                            AppColors.gradientText(
-                                '$position' + "° Posto", isFirst ? screenWidth * 0.1 : screenWidth * 0.07)
+                          isFirst
+                              ? AppColors.firstPlaceGradientText(
+                                  '$position° Posto',
+                                  isFirst
+                                      ? screenWidth * 0.1
+                                      : screenWidth * 0.07)
+                              : AppColors.gradientText(
+                                  '$position° Posto',
+                                  isFirst
+                                      ? screenWidth * 0.1
+                                      : screenWidth * 0.07)
                         ],
                       ),
                     ),
                   ],
                 ),
               ),
-              //Visualizzazione punti
+              // Visualizzazione punti
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  SizedBox(height: isFirst ? 35 :  isSecond ? 25 :17),
-                  AppColors.gradientText("Punti: " + points, screenWidth * 0.035),
+                  SizedBox(height: isFirst ? 35 : isSecond ? 25 : 17),
+                  AppColors.gradientText(
+                      "Punti: $points", screenWidth * 0.035),
                 ],
               ),
             ],
           ),
         ),
-        //Display Avatar
+        // Display Avatar
         Positioned(
           top: isFirst ? 55 : 45,
           left: -5,
@@ -246,7 +198,7 @@ class LeaderboardHomeScreen extends StatelessWidget {
             ),
           ),
         ),
-        //Display Username
+        // Display Username
         Positioned(
           top: avatarSize / 2 - 11,
           left: isFirst ? avatarSize + 5 : avatarSize + 15,
@@ -276,6 +228,126 @@ class LeaderboardHomeScreen extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    return Scaffold(
+      drawer: SideMenu(),
+      body: Container(
+        decoration: const BoxDecoration(
+          color: AppColors.backgroundColor,
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // App Bar
+              TopBar(
+                  username: username,
+                  points: yourPoints ?? 0,
+                  showMenu: true,
+                  showUser: true),
+              // Current User Position
+              if (isLoading)
+                Center(child: CircularProgressIndicator())
+              else
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.purple.shade900.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            yourRank != null ? '$yourRank' : 'N/A',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: screenWidth * 0.12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Positioned(
+                      top: 0,
+                      left: 36,
+                      child: AppColors.gradientText(
+                          "Sei in posizione:", screenWidth * 0.06),
+                    ),
+                  ],
+                ),
+
+              // Leaderboard Title
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: AppColors.gradientText(
+                      "Classifica Generale:", screenWidth * 0.07),
+                ),
+              ),
+
+              // Leaderboard List
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: fetchLeaderboard,
+                  child: topUsers.isEmpty
+                      ? ListView(
+                          children: [
+                            Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(20.0),
+                                child: Text(
+                                  "Nessun utente trovato nella classifica.",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: screenWidth * 0.05,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: topUsers.length,
+                          itemBuilder: (context, index) {
+                            final user = topUsers[index];
+                            bool isFirst = index == 0;
+                            bool isSecond = index == 1;
+                            bool isThird = index == 2;
+                            return _buildLeaderboardItem(
+                              position: '${index + 1}',
+                              username: user.username,
+                              points: '${user.points}',
+                              avatar: user.username.isNotEmpty
+                                  ? user.username[0].toUpperCase()
+                                  : 'U',
+                              screenWidth: screenWidth,
+                              isFirst: isFirst,
+                              isSecond: isSecond,
+                              isThird: isThird,
+                              screenHeight: screenHeight,
+                            );
+                          },
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
