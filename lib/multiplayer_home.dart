@@ -9,6 +9,7 @@ import 'app_colors.dart';
 import 'top_bar.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'lobby.dart';
+import "animated_button.dart";
 
 class MultiplayerHome extends StatelessWidget {
   const MultiplayerHome({Key? key}) : super(key: key);
@@ -413,62 +414,66 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                                           "Crea una partita",
                                           screenWidth * 0.07,
                                         ),
-                                        const SizedBox(height: 40),
-                                        Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              borderRadius: BorderRadius.circular(30),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.pink.withOpacity(0.8),
-                                                  blurRadius: 20,
-                                                  spreadRadius: 4,
-                                                  offset: const Offset(0, 0),
-                                                ),
-                                              ],
-                                            ),
+                                        SizedBox(height: screenHeight * 0.04),
+                                        AnimatedButton(
+                                          onPressed: () {},
+                                          isLocked: false,
+                                          child: Align(
+                                            alignment: Alignment.centerLeft,
                                             child: Container(
                                               decoration: BoxDecoration(
-                                                gradient: LinearGradient(
-                                                  colors: [
-                                                    const Color.fromARGB(110, 214, 57, 196),
-                                                    const Color.fromARGB(110, 255, 0, 208),
-                                                    const Color.fromARGB(110, 140, 53, 232)
-                                                  ],
-                                                  begin: Alignment.topLeft,
-                                                  end: Alignment.bottomRight,
-                                                ),
                                                 borderRadius: BorderRadius.circular(30),
-                                                boxShadow: const [
+                                                boxShadow: [
                                                   BoxShadow(
-                                                    color: Colors.transparent,
+                                                    color: Colors.pink.withOpacity(0.8),
                                                     blurRadius: 20,
                                                     spreadRadius: 4,
-                                                    offset: Offset(0, 0),
+                                                    offset: const Offset(0, 0),
                                                   ),
                                                 ],
                                               ),
-                                              child: ElevatedButton(
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: Colors.transparent,
-                                                  padding: const EdgeInsets.symmetric(
-                                                    horizontal: 15,
-                                                    vertical: 5,
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  gradient: LinearGradient(
+                                                    colors: [
+                                                      const Color.fromARGB(110, 214, 57, 196),
+                                                      const Color.fromARGB(110, 255, 0, 208),
+                                                      const Color.fromARGB(110, 140, 53, 232)
+                                                    ],
+                                                    begin: Alignment.topLeft,
+                                                    end: Alignment.bottomRight,
                                                   ),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.circular(30),
-                                                  ),
-                                                  elevation: 0,
-                                                  shadowColor: Colors.transparent,
+                                                  borderRadius: BorderRadius.circular(30),
+                                                  boxShadow: const [
+                                                    BoxShadow(
+                                                      color: Colors.transparent,
+                                                      blurRadius: 20,
+                                                      spreadRadius: 4,
+                                                      offset: Offset(0, 0),
+                                                    ),
+                                                  ],
                                                 ),
-                                                onPressed: _toggleContainer,
-                                                child: const Padding(
-                                                  padding: EdgeInsets.symmetric(
-                                                    horizontal: 15,
-                                                    vertical: 8,
+                                                child: ElevatedButton(
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: Colors.transparent,
+                                                    padding: const EdgeInsets.symmetric(
+                                                      horizontal: 15,
+                                                      vertical: 5,
+                                                    ),
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius: BorderRadius.circular(30),
+                                                    ),
+                                                    elevation: 0,
+                                                    shadowColor: Colors.transparent,
                                                   ),
-                                                  child: Text("Crea una Lobby"),
+                                                  onPressed: _toggleContainer,
+                                                  child: const Padding(
+                                                    padding: EdgeInsets.symmetric(
+                                                      horizontal: 15,
+                                                      vertical: 8,
+                                                    ),
+                                                    child: Text("Crea una Lobby"),
+                                                  ),
                                                 ),
                                               ),
                                             ),
@@ -480,12 +485,12 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 20),
+                            SizedBox(height: screenHeight * 0.02),
                             AppColors.gradientText(
                               "Unisciti ad una Partita",
                               screenWidth * 0.07,
                             ),
-                            const SizedBox(height: 10),
+                            SizedBox(height: screenHeight * 0.01),
                             if (lobbyProvider.lobbies.isEmpty)
                               Center(
                                 child: Text(
@@ -511,7 +516,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                                   );
                                 },
                               ),
-                            const SizedBox(height: 40),
+                            SizedBox(height: screenHeight * 0.04),
                           ],
                         ),
                       ),
@@ -556,7 +561,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                               "Crea Lobby",
                               screenWidth * 0.07,
                             ),
-                            const SizedBox(height: 20),
+                            SizedBox(height: screenHeight * 0.02),
                             TextField(
                               focusNode: _textFieldFocusNodeNome,
                               decoration: InputDecoration(
@@ -572,7 +577,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                               style: const TextStyle(color: Colors.white),
                               onChanged: (value) => _lobbyName = value,
                             ),
-                            const SizedBox(height: 20),
+                            SizedBox(height: screenHeight * 0.02),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
@@ -600,7 +605,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                                 },
                               ),
                             ),
-                            const SizedBox(height: 20),
+                            SizedBox(height: screenHeight * 0.02),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
@@ -627,7 +632,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                                 },
                               ),
                             ),
-                            const SizedBox(height: 20),
+                            SizedBox(height: screenHeight * 0.02),
                             TextField(
                               focusNode: _textFieldFocusNodePass,
                               decoration: InputDecoration(
@@ -643,7 +648,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                               style: const TextStyle(color: Colors.white),
                               onChanged: (value) => _password = value,
                             ),
-                            const SizedBox(height: 20),
+                            SizedBox(height: screenHeight * 0.02),
                             Container(
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(30),

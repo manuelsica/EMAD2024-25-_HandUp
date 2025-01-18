@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hand_up_interface/animated_button.dart';
+import 'package:hand_up_interface/difficulty_selection.dart';
 import 'package:provider/provider.dart'; // Importa Provider
 import 'dart:io';
 import 'package:provider/provider.dart';
@@ -11,6 +13,8 @@ import 'modalita_screen.dart';
 import 'socket_service.dart'; // Importa SocketService
 import 'package:google_fonts/google_fonts.dart';
 import 'top_bar.dart';
+import "difficulty_selection.dart";
+import "selezione_gioco.dart";
 import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // Importa FlutterSecureStorage
 
 class Home extends StatefulWidget {
@@ -55,6 +59,9 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -134,61 +141,65 @@ class _HomeState extends State<Home> {
                                                       style: TextStyle(
                                                           color: Colors.grey[300]),
                                                     ),
-                                                    const SizedBox(height: 20),
-                                                    Align(
-                                                      alignment: Alignment.centerLeft,
-                                                      child: Container(
-                                                        decoration: BoxDecoration(
-                                                          borderRadius:
-                                                              BorderRadius.circular(30),
-                                                          boxShadow: [
-                                                            BoxShadow(
-                                                              color: Colors.pink
-                                                                  .withOpacity(0.8),
-                                                              blurRadius: 20,
-                                                              spreadRadius: 4,
-                                                              offset:
-                                                                  const Offset(0, 0),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                        // Bottone per iniziare il gioco
-                                                        child: ElevatedButton(
-                                                            // Effetto Neon
-                                                            style: ElevatedButton.styleFrom(
-                                                              backgroundColor: Colors.pink,
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .symmetric(
-                                                                horizontal: 15,
-                                                                vertical: 5,
+                                                    SizedBox(height: screenHeight * 0.02),
+                                                    AnimatedButton(
+                                                      onPressed: () {},
+                                                      isLocked: false,
+                                                      child: Align(
+                                                        alignment: Alignment.centerLeft,
+                                                        child: Container(
+                                                          decoration: BoxDecoration(
+                                                            borderRadius:
+                                                                BorderRadius.circular(30),
+                                                            boxShadow: [
+                                                              BoxShadow(
+                                                                color: Colors.pink
+                                                                    .withOpacity(0.8),
+                                                                blurRadius: 20,
+                                                                spreadRadius: 4,
+                                                                offset:
+                                                                    const Offset(0, 0),
                                                               ),
-                                                              shape: RoundedRectangleBorder(
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(30),
-                                                              ),
-                                                              elevation: 0,
-                                                              shadowColor:
-                                                                  Colors.transparent,
-                                                            ),
-                                                            onPressed: () {
-                                                              Navigator.push(
-                                                                context,
-                                                                MaterialPageRoute(
-                                                                    builder: (context) =>
-                                                                        const ModalitaScreen()),
-                                                              );
-                                                            },
-                                                            child: const Padding(
+                                                            ],
+                                                          ),
+                                                          // Bottone per iniziare il gioco
+                                                          child: ElevatedButton(
+                                                              // Effetto Neon
+                                                              style: ElevatedButton.styleFrom(
+                                                                backgroundColor: Colors.pink,
                                                                 padding:
-                                                                    EdgeInsets.symmetric(
+                                                                    const EdgeInsets
+                                                                        .symmetric(
                                                                   horizontal: 15,
-                                                                  vertical: 8,
+                                                                  vertical: 5,
                                                                 ),
-                                                                child: Text(
-                                                                  'Parole casuali',
-                                                                ))),
+                                                                shape: RoundedRectangleBorder(
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(30),
+                                                                ),
+                                                                elevation: 0,
+                                                                shadowColor:
+                                                                    Colors.transparent,
+                                                              ),
+                                                              onPressed: () {
+                                                                Navigator.push(
+                                                                  context,
+                                                                  MaterialPageRoute(
+                                                                      builder: (context) =>
+                                                                          const DifficultySelectionScreen()),
+                                                                );
+                                                              },
+                                                              child: const Padding(
+                                                                  padding:
+                                                                      EdgeInsets.symmetric(
+                                                                    horizontal: 15,
+                                                                    vertical: 8,
+                                                                  ),
+                                                                  child: Text(
+                                                                    'Parole casuali',
+                                                                  ))),
+                                                        ),
                                                       ),
                                                     )
                                                   ],
@@ -200,7 +211,7 @@ class _HomeState extends State<Home> {
                                       ],
                                     ),
                                   ),
-                                  const SizedBox(height: 20),
+                                  SizedBox(height: screenHeight * 0.02),
 
                                   // Menu Items
                                   _buildMenuItem(
@@ -235,6 +246,29 @@ class _HomeState extends State<Home> {
                                     screenHeight: MediaQuery.of(context).size.height,
                                   ),
                                 ],
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.bottomLeft,
+                              child: Padding(
+                                padding: const EdgeInsets.all(15),
+                                child: IconButton(
+                                  icon: CustomPaint(
+                                    size: Size(screenWidth * 0.045,
+                                        screenHeight * 0.045),
+                                    painter: GradientIconPainter(
+                                      icon: Icons.arrow_back,
+                                      gradient: AppColors.textGradient,
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.pop(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => GameSelectionScreen()),
+                                    );
+                                  },
+                                ),
                               ),
                             ),
                           ],
@@ -293,7 +327,7 @@ class _HomeState extends State<Home> {
                           gradient: AppColors.textGradient,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: screenWidth * 0.008),
                       Text(
                         'Costo: $points punti',
                         style: TextStyle(

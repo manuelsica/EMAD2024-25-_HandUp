@@ -88,6 +88,9 @@ class _ModalitaScreenState extends State<ModalitaScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       backgroundColor: AppColors.backgroundColor, // Sfondo della schermata
       appBar: AppBar(
@@ -109,7 +112,7 @@ class _ModalitaScreenState extends State<ModalitaScreen> {
                 buildGradientButton(context, "Facile", "facile", Icons.sentiment_very_satisfied),
                 buildGradientButton(context, "Medio", "medio", Icons.sentiment_satisfied),
                 buildGradientButton(context, "Difficile", "difficile", Icons.sentiment_dissatisfied),
-                const SizedBox(height: 30), // Manteniamo lo spazio aggiuntivo se necessario
+                SizedBox(height: screenHeight * 0.03), // Manteniamo lo spazio aggiuntivo se necessario
                 // Logo rimosso
               ],
             ),
@@ -179,6 +182,9 @@ class _GradientButtonState extends State<GradientButton> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Transform.scale(
       scale: _scale,
       child: Container(
@@ -216,7 +222,7 @@ class _GradientButtonState extends State<GradientButton> with SingleTickerProvid
                   widget.iconData,
                   color: Colors.white,
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: screenWidth * 0.01),
                 AppColors.gradientText(
                   widget.label,
                   20.0, // Dimensione del testo

@@ -44,7 +44,7 @@ class TopBar extends StatelessWidget {
               );
             })
           else
-            const SizedBox(width: 48),
+            SizedBox(width: screenWidth * 0.048),
 
           // Informazioni Utente loggato
           if (showUser)
@@ -54,7 +54,7 @@ class TopBar extends StatelessWidget {
                   backgroundColor: Colors.purple,
                   child: Icon(Icons.person, color: Colors.white),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: screenWidth * 0.008),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -72,7 +72,7 @@ class TopBar extends StatelessWidget {
               ],
             )
           else
-            const SizedBox(width: 48),
+            SizedBox(width: screenWidth * 0.048),
         ],
       ),
     );

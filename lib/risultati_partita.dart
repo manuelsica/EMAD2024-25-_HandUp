@@ -10,6 +10,9 @@ import 'top_bar.dart';
 class RisultatiPartitaScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       drawer: SideMenu(),
       appBar: AppBar(
@@ -35,7 +38,7 @@ class RisultatiPartitaScreen extends StatelessWidget {
                     "Risultati della Partita",
                     24, // Dimensione del font
                   ),
-                  SizedBox(height: 30),
+                  SizedBox(height: screenHeight * 0.03),
 
                   // InfoBox: Tempo di Gioco
                   InfoBox(
@@ -44,7 +47,7 @@ class RisultatiPartitaScreen extends StatelessWidget {
                     icon: Icons.hourglass_bottom,
                     color: Colors.pinkAccent,
                   ),
-                  SizedBox(height: 16),
+                  SizedBox(height: screenHeight * 0.016),
 
                   // InfoBox: Punti Esperienza
                   InfoBox(
@@ -53,7 +56,7 @@ class RisultatiPartitaScreen extends StatelessWidget {
                     icon: Icons.star,
                     color: Colors.orangeAccent,
                   ),
-                  SizedBox(height: 16),
+                  SizedBox(height: screenHeight * 0.016),
 
                   // Progressi con gradiente
                   Container(
@@ -68,14 +71,14 @@ class RisultatiPartitaScreen extends StatelessWidget {
                         Row(
                           children: [
                             Icon(Icons.bar_chart, color: Colors.pinkAccent),
-                            SizedBox(width: 8),
+                            SizedBox(width: screenWidth * 0.008),
                             AppColors.gradientText(
                               "Progressi", // Testo a sinistra
                               18, // Dimensione del font
                             ),
                           ],
                         ),
-                        SizedBox(height: 12),
+                        SizedBox(height: screenHeight * 0.012),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -90,7 +93,7 @@ class RisultatiPartitaScreen extends StatelessWidget {
                             ),
                           ],
                         ),
-                        SizedBox(height: 12),
+                        SizedBox(height: screenHeight * 0.012),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -147,7 +150,7 @@ class RisultatiPartitaScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      SizedBox(width: 16), // Spazio tra i pulsanti
+                      SizedBox(width: screenWidth * 0.016), // Spazio tra i pulsanti
 
                       // Pulsante "Torna alle Modalità" avvolto in Flexible
                       Flexible(
@@ -183,7 +186,7 @@ class RisultatiPartitaScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  SizedBox(height: 20),
+                  SizedBox(height: screenHeight * 0.02),
                 ],
               ),
             ),
@@ -211,6 +214,9 @@ class InfoBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -223,7 +229,7 @@ class InfoBox extends StatelessWidget {
           Row(
             children: [
               Icon(icon, color: color),
-              SizedBox(width: 8),
+              SizedBox(width: screenWidth * 0.008),
               AppColors.gradientText(
                 label, // Testo della label
                 16, // Dimensione del font

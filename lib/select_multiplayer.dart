@@ -149,6 +149,9 @@ class _ModalitaScreenState extends State<ModalitaScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
       appBar: AppBar(
@@ -170,7 +173,7 @@ class _ModalitaScreenState extends State<ModalitaScreen> {
                 buildGradientButton(context, "Facile", "facile", Icons.sentiment_very_satisfied),
                 buildGradientButton(context, "Medio", "medio", Icons.sentiment_satisfied),
                 buildGradientButton(context, "Difficile", "difficile", Icons.sentiment_dissatisfied),
-                const SizedBox(height: 30),
+                SizedBox(height: screenHeight * 0.03),
                 if (_waitingResult) 
                   SpinPerfect(
                     animate: true,
@@ -264,6 +267,9 @@ class _GradientButtonState extends State<GradientButton> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Transform.scale(
       scale: _scale,
       child: GestureDetector(
@@ -308,12 +314,12 @@ class _GradientButtonState extends State<GradientButton> with SingleTickerProvid
                     widget.iconData,
                     color: Colors.white,
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: screenWidth * 0.01),
                   AppColors.gradientText(
                     widget.label,
                     20.0,
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: screenWidth * 0.01),
                   // Visualizza il conteggio dei voti con animazione
                   FadeIn(
                     duration: const Duration(milliseconds: 500),

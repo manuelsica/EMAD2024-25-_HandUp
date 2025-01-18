@@ -10,6 +10,7 @@ import 'package:hand_up_interface/consultazione_lettera.dart';
 import 'top_bar.dart';
 import 'socket_service.dart';
 import 'user.dart';
+import "animated_button.dart";
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 void main() {
@@ -192,15 +193,11 @@ class _ConsultazioneScreenState extends State<ConsultazioneScreen>
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
                                       children: [
-                                        Text(
+                                        AppColors.gradientText(
                                           'Libreria di Consultazione',
-                                          style: TextStyle(
-                                            fontSize: screenWidth * 0.06,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.textColor2,
-                                          ),
+                                          screenWidth * 0.06
                                         ),
-                                        const SizedBox(height: 40),
+                                        SizedBox(height: screenHeight * 0.04),
                                         Align(
                                           alignment: Alignment.center,
                                           child: Container(
@@ -233,7 +230,7 @@ class _ConsultazioneScreenState extends State<ConsultazioneScreen>
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 20),
+                            SizedBox(height: screenHeight * 0.02),
 
                             // Sezione Join Game
                             Text(
@@ -244,7 +241,7 @@ class _ConsultazioneScreenState extends State<ConsultazioneScreen>
                                 color: AppColors.textColor1,
                               ),
                             ),
-                            const SizedBox(height: 10),
+                            SizedBox(height: screenHeight * 0.01),
                             // Lista delle Lettere (A-Z)
                             isLoading
                                 ? Center(child: CircularProgressIndicator())
@@ -252,17 +249,21 @@ class _ConsultazioneScreenState extends State<ConsultazioneScreen>
                                     children: List.generate(26, (index) {
                                       // Genera una lettera a partire dall'indice
                                       String lettera = String.fromCharCode(65 + index); // 65 è il codice ASCII di 'A'
-                                      return _buildLobbyItem(
-                                        lettera: lettera,
-                                        screenWidth: screenWidth,
-                                        screenHeight: screenHeight,
-                                        context:
-                                            context, // Passa il contesto per la navigazione
+                                      return AnimatedButton(
+                                        onPressed: () {},
+                                        isLocked: false,
+                                        child: _buildLobbyItem(
+                                          lettera: lettera,
+                                          screenWidth: screenWidth,
+                                          screenHeight: screenHeight,
+                                          context:
+                                              context, // Passa il contesto per la navigazione
+                                        ),
                                       );
                                     }),
                                   ),
                             // Bottone Indietro
-                            const SizedBox(height: 20),
+                            SizedBox(height: screenHeight * 0.02),
                           ],
                         ),
                       ),

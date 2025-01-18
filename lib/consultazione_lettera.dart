@@ -7,6 +7,7 @@ import 'app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'top_bar.dart';
 import 'socket_service.dart'; 
+import "consultazione.dart";
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 void main() {
@@ -166,7 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       color: AppColors.textColor2,
                                     ),
                                   ),
-                                  const SizedBox(height: 40),
+                                  SizedBox(height: screenHeight * 0.04),
                                   Align(
                                     alignment: Alignment.center,
                                     child: Container(
@@ -198,7 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      SizedBox(height: screenHeight * 0.02),
 
                       // Sezione Join Game
                       Text(
@@ -209,7 +210,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: AppColors.textColor1,
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      SizedBox(height: screenHeight * 0.01),
                       // Lista delle Lettere (A-Z)
                       isLoading
                           ? Center(child: CircularProgressIndicator())
@@ -228,7 +229,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               }),
                             ),
                       // Bottone Indietro
-                      const SizedBox(height: 20),
+                      SizedBox(height: screenHeight * 0.02),
                     ],
                   ),
                 ),
@@ -455,7 +456,7 @@ class _ConsultazioneLetteraState extends State<ConsultazioneLettera> {
                       )
                     else
                       SizedBox(
-                          width: 40), // Placeholder per la freccia sinistra
+                          width: screenWidth * 0.04), // Placeholder per la freccia sinistra
                     Expanded(
                       child: Center(
                         child: AnimatedSwitcher(
@@ -510,10 +511,10 @@ class _ConsultazioneLetteraState extends State<ConsultazioneLettera> {
                         },
                       )
                     else
-                      SizedBox(width: 40), // Placeholder per la freccia destra
+                      SizedBox(width: screenWidth * 0.04), // Placeholder per la freccia destra
                   ],
                 ),
-                SizedBox(height: 16),
+                SizedBox(height: screenHeight * 0.016),
                 // Titolo "Lettera A"
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
@@ -542,7 +543,7 @@ class _ConsultazioneLetteraState extends State<ConsultazioneLettera> {
                     ),
                   ),
                 ),
-                SizedBox(height: 20),
+                SizedBox(height: screenHeight * 0.02),
                 // Riquadro descrizione
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
@@ -571,9 +572,31 @@ class _ConsultazioneLetteraState extends State<ConsultazioneLettera> {
                     ),
                   ),
                 ),
-                SizedBox(height: 20),
+                SizedBox(height: screenHeight * 0.02),
                 Spacer(),
               ],
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomLeft,
+            child: Padding(
+              padding: const EdgeInsets.all(15),
+              child: IconButton(
+                icon: CustomPaint(
+                  size: Size(screenWidth * 0.045, screenHeight * 0.045),
+                  painter: GradientIconPainter(
+                    icon: Icons.arrow_back,
+                    gradient: AppColors.textGradient,
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.pop(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => ConsultazioneScreen()),
+                  );
+                },
+              ),
             ),
           ),
         ],

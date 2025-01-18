@@ -117,14 +117,15 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     final lobbyProvider = Provider.of<LobbyProvider>(context);
     // Aggiorniamo la lobby con eventuali dati nuovi
     final updatedLobby = lobbyProvider.lobbies.firstWhere(
       (l) => l.lobbyId == widget.lobby.lobbyId,
       orElse: () => widget.lobby,
     );
-
-    final screenWidth = MediaQuery.of(context).size.width;
 
     // L'owner è chi ha creato la lobby (username)
     final isOwner = (updatedLobby.creator == _currentUsername);
@@ -173,9 +174,9 @@ class _LobbyScreenState extends State<LobbyScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildInfoRow('Nome:', updatedLobby.lobbyName, screenWidth),
-                  const SizedBox(height: 10),
+                  SizedBox(height: screenHeight * 0.01),
                   _buildInfoRow('Modalità:', updatedLobby.type, screenWidth),
-                  const SizedBox(height: 10),
+                  SizedBox(height: screenHeight * 0.01),
                   _buildInfoRow(
                     'Giocatori:',
                     '${updatedLobby.currentPlayers}/${updatedLobby.numPlayers}',
@@ -316,7 +317,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: screenWidth * 0.012),
           Text(
             player.username,
             style: TextStyle(
