@@ -2,11 +2,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:hand_up_interface/main.dart';
+import 'main.dart';
 import 'sidemenu.dart';
 import 'app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:hand_up_interface/consultazione_lettera.dart';
+import 'consultazione_lettera.dart';
 import 'top_bar.dart';
 import 'socket_service.dart';
 import 'user.dart';

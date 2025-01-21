@@ -9,7 +9,7 @@ import 'package:image/image.dart' as img;
 import "app_colors.dart";
 import 'package:google_fonts/google_fonts.dart';
 import "sidemenu.dart"; 
-import 'package:hand_up_interface/risultati_singleplayer.dart';
+import 'risultati_singleplayer.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import "top_bar.dart";
 import "backend_config.dart";

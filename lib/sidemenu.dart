@@ -1,6 +1,6 @@
 // lib/sidemenu.dart
 import "package:flutter/material.dart";
-import "package:hand_up_interface/consultazione.dart";
+import "consultazione.dart";
 import "app_colors.dart";
 import "multiplayer_home.dart";
 import "classifiche.dart";

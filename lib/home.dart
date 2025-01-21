@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:hand_up_interface/animated_button.dart';
-import 'package:hand_up_interface/difficulty_selection.dart';
+import 'animated_button.dart';
+import 'difficulty_selection.dart';
 import 'package:provider/provider.dart'; // Importa Provider
 import 'dart:io';
 import 'package:provider/provider.dart';

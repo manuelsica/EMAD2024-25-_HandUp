@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:hand_up_interface/home.dart';
+import 'home.dart';
 import "sidemenu.dart";
 import "app_colors.dart";
 import "top_bar.dart";
