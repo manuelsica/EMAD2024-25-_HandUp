@@ -7,7 +7,7 @@ import 'app_colors.dart';
 import 'lobby.dart';
 import 'lobby_provider.dart';
 import 'socket_service.dart';
-import 'select_multiplayer.dart'; // <-- Schermata di selezione per Spelling
+import 'select_multiplayer.dart'; 
 
 class LobbyScreen extends StatefulWidget {
   final Lobby lobby;

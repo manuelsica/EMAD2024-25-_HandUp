@@ -130,7 +130,7 @@ class _HomeState extends State<Home> {
                                                   children: [
                                                     // Descrizione
                                                     Text(
-                                                      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur imperdiet ex vel libero pharetra, vita a posuere purus egestas.',
+                                                      'Lore ipsum dolor sit amet, consectetur adipiscing elit. Curabitur imperdiet ex vel libero pharetra, vita a posuere purus egestas.',
                                                       style: TextStyle(
                                                           color: Colors.grey[300]),
                                                     ),

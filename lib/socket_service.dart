@@ -10,21 +10,33 @@ import 'backend_config.dart';
 import 'user.dart';
 
 class SocketService {
-  IO.Socket? socket; //opzionale
+  IO.Socket? socket; // Opzionale
   final FlutterSecureStorage storage = const FlutterSecureStorage();
 
   bool _isDisposed = false;
   bool _isListenersInitialized = false;
 
   // StreamControllers per vari eventi
-  final StreamController<List<Lobby>> _lobbiesStreamController = StreamController<List<Lobby>>.broadcast();
-  final StreamController<Lobby> _lobbyCreatedStreamController = StreamController<Lobby>.broadcast();
-  final StreamController<String> _joinedLobbyStreamController = StreamController<String>.broadcast();
-  final StreamController<dynamic> _gameStartedStreamController = StreamController<dynamic>.broadcast();
-  final StreamController<String> _voteResultStreamController = StreamController<String>.broadcast();
-  final StreamController<Map<String, int>> _voteUpdateStreamController = StreamController<Map<String, int>>.broadcast(); // Aggiunto
-  final StreamController<void> _startTimerStreamController = StreamController<void>.broadcast();
-  final StreamController<void> _gameFinishedStreamController = StreamController<void>.broadcast();
+  final StreamController<List<Lobby>> _lobbiesStreamController =
+      StreamController<List<Lobby>>.broadcast();
+  final StreamController<Lobby> _lobbyCreatedStreamController =
+      StreamController<Lobby>.broadcast();
+  final StreamController<String> _joinedLobbyStreamController =
+      StreamController<String>.broadcast();
+  final StreamController<dynamic> _gameStartedStreamController =
+      StreamController<dynamic>.broadcast();
+  final StreamController<String> _voteResultStreamController =
+      StreamController<String>.broadcast();
+  final StreamController<Map<String, int>> _voteUpdateStreamController =
+      StreamController<Map<String, int>>.broadcast(); // Aggiunto
+  final StreamController<void> _startTimerStreamController =
+      StreamController<void>.broadcast();
+  final StreamController<void> _gameFinishedStreamController =
+      StreamController<void>.broadcast();
+
+  final StreamController<String> _errorStreamController =
+      StreamController<String>.broadcast(); // Aggiunto
+  Stream<String> get errorStream => _errorStreamController.stream;
 
   // Getter per gli stream
   Stream<List<Lobby>> get lobbiesStream => _lobbiesStreamController.stream;
@@ -32,7 +44,8 @@ class SocketService {
   Stream<String> get joinedLobbyStream => _joinedLobbyStreamController.stream;
   Stream<dynamic> get gameStartedStream => _gameStartedStreamController.stream;
   Stream<String> get voteResultStream => _voteResultStreamController.stream;
-  Stream<Map<String, int>> get voteUpdateStream => _voteUpdateStreamController.stream; // Aggiunto
+  Stream<Map<String, int>> get voteUpdateStream =>
+      _voteUpdateStreamController.stream; // Aggiunto
   Stream<void> get startTimerStream => _startTimerStreamController.stream;
   Stream<void> get gameFinishedStream => _gameFinishedStreamController.stream;
 
@@ -45,6 +58,7 @@ class SocketService {
   late void Function(dynamic) _voteUpdateListener; // Aggiunto
   late void Function(dynamic) _startTimerListener;
   late void Function(dynamic) _gameFinishedListener;
+  late void Function(dynamic) _errorListener; // Aggiunto
 
   /// Inizializza la connessione Socket.IO con il token JWT
   Future<void> connect() async {
@@ -73,7 +87,7 @@ class SocketService {
 
     socket?.on('connect', (_) {
       print('Connesso a Socket.IO');
-      getLobbies();
+      // Rimosso getLobbies()
       if (!_isListenersInitialized) {
         listenToEvents();
         _isListenersInitialized = true;
@@ -90,10 +104,12 @@ class SocketService {
 
     socket?.on('error', (data) {
       print('Errore Socket.IO: $data');
+      _errorStreamController.add('Errore Socket.IO: $data');
     });
 
     socket?.on('connect_error', (data) {
       print('Errore di connessione a Socket.IO: $data');
+      _errorStreamController.add('Errore di connessione a Socket.IO: $data');
     });
   }
 
@@ -121,7 +137,8 @@ class SocketService {
 
   /// Emmette l'evento 'join_lobby' per unirsi a una lobby specifica
   void joinLobby(String lobbyId, {String? password}) {
-    print('Emettendo evento "join_lobby" per lobbyId: $lobbyId con password: $password');
+    print(
+        'Emettendo evento "join_lobby" per lobbyId: $lobbyId con password: $password');
     socket?.emit('join_lobby', {
       'lobby_id': lobbyId,
       'password': password,
@@ -152,7 +169,8 @@ class SocketService {
 
   /// Emmette l'evento 'toggle_ready' per segnalare lo stato di preparazione del giocatore
   void toggleReady(String lobbyId, bool isReady) {
-    print('Emettendo evento "toggle_ready" per lobbyId: $lobbyId con isReady: $isReady');
+    print(
+        'Emettendo evento "toggle_ready" per lobbyId: $lobbyId con isReady: $isReady');
     socket?.emit('toggle_ready', {
       'lobby_id': lobbyId,
       'is_ready': isReady,
@@ -193,7 +211,8 @@ class SocketService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         List<dynamic> lobbiesJson = data['lobbies'];
-        List<Lobby> lobbies = lobbiesJson.map((json) => Lobby.fromJson(json)).toList();
+        List<Lobby> lobbies =
+            lobbiesJson.map((json) => Lobby.fromJson(json)).toList();
         return lobbies;
       } else {
         print('Errore nel recupero delle lobby: ${response.statusCode}');
@@ -237,36 +256,42 @@ class SocketService {
 
   /// Configura i listener per gli eventi Socket.IO
   void listenToEvents() {
+  // Listener per l'evento 'update_lobbies'
+  _updateLobbiesListener = (data) {
     if (_isDisposed) return;
-
-    print('Registrazione dei listener per gli eventi Socket.IO...');
-
-    // Listener per l'evento 'update_lobbies'
-    _updateLobbiesListener = (data) {
-      if (_isDisposed) return;
-      print('Ricevuto evento "update_lobbies" con dati: $data');
-      try {
-        List<Lobby> list = [];
-        if (data['lobbies'] is List) {
-          for (var lbJson in data['lobbies']) {
-            if (lbJson is Map<String, dynamic>) {
-              list.add(Lobby.fromJson(lbJson));
-            }
+    print('Ricevuto evento "update_lobbies" con dati: $data'); // Log aggiuntivo
+    try {
+      List<Lobby> list = [];
+      if (data['lobbies'] is List) {
+        for (var lbJson in data['lobbies']) {
+          if (lbJson is Map<String, dynamic>) {
+            list.add(Lobby.fromJson(lbJson));
           }
         }
-        _lobbiesStreamController.add(list);
-      } catch (e) {
-        print('Errore nel listener "update_lobbies": $e');
       }
-    };
+      _lobbiesStreamController.add(list);
+    } catch (e) {
+      print('Errore nel listener "update_lobbies": $e');
+      _errorStreamController.add('Errore nel listener "update_lobbies": $e');
+    }
+  };
+
+  socket?.on('update_lobbies', _updateLobbiesListener);
 
     // Listener per l'evento 'lobby_created'
     _lobbyCreatedListener = (data) {
       if (_isDisposed) return;
       print('Ricevuto evento "lobby_created" con dati: $data');
-      if (data['lobby'] is Map<String, dynamic>) {
-        Lobby lb = Lobby.fromJson(data['lobby']);
-        _lobbyCreatedStreamController.add(lb);
+      try {
+        if (data['lobby'] is Map<String, dynamic>) {
+          Lobby lb = Lobby.fromJson(data['lobby']);
+          _lobbyCreatedStreamController.add(lb);
+        } else {
+          throw Exception('Dati "lobby_created" non validi.');
+        }
+      } catch (e) {
+        print('Errore nel listener "lobby_created": $e');
+        _errorStreamController.add('Errore nel listener "lobby_created": $e');
       }
     };
 
@@ -274,8 +299,17 @@ class SocketService {
     _joinedLobbyListener = (data) {
       if (_isDisposed) return;
       print('Ricevuto evento "joined_lobby" con dati: $data');
-      final lobbyId = data['lobby_id'] ?? '';
-      _joinedLobbyStreamController.add(lobbyId);
+      try {
+        final lobbyId = data['lobby_id'] ?? '';
+        if (lobbyId.isNotEmpty) {
+          _joinedLobbyStreamController.add(lobbyId);
+        } else {
+          throw Exception('Dati "joined_lobby" non validi.');
+        }
+      } catch (e) {
+        print('Errore nel listener "joined_lobby": $e');
+        _errorStreamController.add('Errore nel listener "joined_lobby": $e');
+      }
     };
 
     // Listener per l'evento 'game_started'
@@ -290,9 +324,16 @@ class SocketService {
       if (_isDisposed) return;
       print('Ricevuto evento "vote_result" con dati: $data');
       // data potrebbe contenere { "mode_chosen": "medio" }
-      if (data is Map && data["mode_chosen"] is String) {
-        print('Modalità scelta: ${data["mode_chosen"]}');
-        _voteResultStreamController.add(data["mode_chosen"]);
+      try {
+        if (data is Map && data["mode_chosen"] is String) {
+          print('Modalità scelta: ${data["mode_chosen"]}');
+          _voteResultStreamController.add(data["mode_chosen"]);
+        } else {
+          throw Exception('Dati "vote_result" non validi.');
+        }
+      } catch (e) {
+        print('Errore nel listener "vote_result": $e');
+        _errorStreamController.add('Errore nel listener "vote_result": $e');
       }
     };
 
@@ -300,15 +341,22 @@ class SocketService {
     _voteUpdateListener = (data) {
       if (_isDisposed) return;
       print('Ricevuto evento "vote_update" con dati: $data');
-      // data dovrebbe contenere { "vote_counts": {"facile": n, "medio": n, "difficile": n} }
-      if (data is Map && data["vote_counts"] is Map<String, dynamic>) {
-        Map<String, int> voteCounts = {};
-        data["vote_counts"].forEach((key, value) {
-          if (value is int) {
-            voteCounts[key] = value;
-          }
-        });
-        _voteUpdateStreamController.add(voteCounts);
+      try {
+        // data dovrebbe contenere { "vote_counts": {"facile": n, "medio": n, "difficile": n} }
+        if (data is Map && data["vote_counts"] is Map<String, dynamic>) {
+          Map<String, int> voteCounts = {};
+          data["vote_counts"].forEach((key, value) {
+            if (value is int) {
+              voteCounts[key] = value;
+            }
+          });
+          _voteUpdateStreamController.add(voteCounts);
+        } else {
+          throw Exception('Dati "vote_update" non validi.');
+        }
+      } catch (e) {
+        print('Errore nel listener "vote_update": $e');
+        _errorStreamController.add('Errore nel listener "vote_update": $e');
       }
     };
 
@@ -327,6 +375,19 @@ class SocketService {
       _gameFinishedStreamController.add(null);
     };
 
+    // Listener per gli errori generali
+    _errorListener = (data) {
+      if (_isDisposed) return;
+      print('Ricevuto evento di errore: $data');
+      if (data is String) {
+        _errorStreamController.add(data);
+      } else if (data is Map<String, dynamic> && data.containsKey('error')) {
+        _errorStreamController.add(data['error'].toString());
+      } else {
+        _errorStreamController.add('Errore sconosciuto: $data');
+      }
+    };
+
     // Registra i listener
     socket?.on('update_lobbies', _updateLobbiesListener);
     socket?.on('lobby_created', _lobbyCreatedListener);
@@ -336,6 +397,7 @@ class SocketService {
     socket?.on('vote_update', _voteUpdateListener); // Aggiunto
     socket?.on('start_timer', _startTimerListener);
     socket?.on('game_finished', _gameFinishedListener);
+    socket?.on('error', _errorListener); // Aggiunto
   }
 
   /// Dispose del servizio SocketService
@@ -352,6 +414,7 @@ class SocketService {
     socket?.off('vote_update', _voteUpdateListener); // Aggiunto
     socket?.off('start_timer', _startTimerListener);
     socket?.off('game_finished', _gameFinishedListener);
+    socket?.off('error', _errorListener); // Aggiunto
 
     // Chiude i StreamControllers
     _lobbiesStreamController.close();
@@ -362,6 +425,7 @@ class SocketService {
     _voteUpdateStreamController.close(); // Aggiunto
     _startTimerStreamController.close();
     _gameFinishedStreamController.close();
+    _errorStreamController.close(); // Aggiunto
 
     // Disconnette il socket
     socket?.disconnect();

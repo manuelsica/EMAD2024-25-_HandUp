@@ -58,31 +58,34 @@ class _GameScreenSpellingState extends State<GameScreenSpelling> {
   void initState() {
     super.initState();
     _initializeCamera();
-
-    // Inizializza lo stato delle lettere della prima parola
-    if (widget.words.isNotEmpty) {
-      _initializeLetterCompletion();
-    }
-
-    // Ottieni l'istanza di SocketService tramite Provider
+    _initializeLetterCompletion();
     socketService = Provider.of<SocketService>(context, listen: false);
+    _notifyPlayerOnGameScreen();
 
-    // Emmetti l'evento 'player_on_game_screen' al server
-    socketService.playerOnGameScreen(widget.lobbyId);
-    print('Emesso player_on_game_screen per la lobby: ${widget.lobbyId}');
+    socketService.on('acknowledge_game_screen', (_) {
+      setState(() {
+        _isWaiting = false;
+      });
+    });
 
-    // Ascolta l'evento 'start_timer' per avviare il timer
     socketService.startTimerStream.listen((_) {
-      print('Ricevuto start_timer');
       _startFiveMinuteTimer();
     });
 
-    // Ascolta l'evento 'game_finished' per navigare ai risultati
     socketService.gameFinishedStream.listen((_) {
-      print('Ricevuto game_finished');
       _navigateToResults();
     });
   }
+
+  void _notifyPlayerOnGameScreen() {
+    socketService.playerOnGameScreen(widget.lobbyId);
+    Future.delayed(const Duration(seconds: 5), () {
+      if (_isWaiting) {
+        _notifyPlayerOnGameScreen();
+      }
+    });
+  }
+
 
   /// Inizializza lo stato di completamento delle lettere per la parola corrente
   void _initializeLetterCompletion() {

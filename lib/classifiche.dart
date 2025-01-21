@@ -1,4 +1,4 @@
-// lib/classifica.dart
+// lib/classifiche.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -68,43 +68,65 @@ class _LeaderboardHomeScreenState extends State<LeaderboardHomeScreen> {
 
   /// Inizializza i dati dell'utente recuperando l'username dalla storage
   Future<void> _initializeUserData() async {
-    // Recupera l'username dalla memorizzazione locale
-    String? storedUsername = await storage.read(key: 'username');
-    int? storedPoints = await storage.read(key: 'points').then((value) => value != null ? int.tryParse(value) : null);
+    try {
+      // Recupera l'username dalla memorizzazione locale
+      String? storedUsername = await storage.read(key: 'username');
+      int? storedPoints = await storage.read(key: 'points').then((value) => value != null ? int.tryParse(value) : null);
 
-    setState(() {
-      username = storedUsername ?? "USERNAME";
-      yourPoints = storedPoints ?? 0;
-    });
+      setState(() {
+        username = storedUsername ?? "USERNAME";
+        yourPoints = storedPoints ?? 0;
+      });
 
-    // Successivamente, recupera la classifica dal server
-    fetchLeaderboard();
+      // Successivamente, recupera la classifica dal server
+      await fetchLeaderboard(); // Attendi che la classifica venga recuperata
+    } catch (e) {
+      print('Errore in _initializeUserData: $e');
+      setState(() {
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Errore nell\'inizializzazione dei dati utente.')),
+      );
+    }
   }
 
   Future<void> fetchLeaderboard() async {
-    final data = await socketService.fetchLeaderboard();
-    if (data != null) {
+    try {
+      print('Inizio fetchLeaderboard');
+      final data = await socketService.fetchLeaderboard();
+      if (data != null) {
+        setState(() {
+          topUsers = (data['leaderboard'] as List)
+              .map((json) => User.fromJson(json))
+              .toList();
+          yourRank = data['your_rank'] as int?;
+          yourPoints = data['your_points'] as int? ?? yourPoints; // Usa i punti dalla classifica se disponibili
+          // Se il server fornisce l'username, aggiorna l'username
+          if (data['your_username'] != null && data['your_username'].toString().isNotEmpty) {
+            username = data['your_username'];
+          }
+          isLoading = false;
+        });
+        print('Classifica caricata con successo.');
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+        // Opzionale: Mostra un messaggio di errore
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Errore nel recupero della classifica. Riprova più tardi.')),
+        );
+        print('Errore nel recupero della classifica: Dati null.');
+      }
+    } catch (e) {
       setState(() {
-        topUsers = (data['leaderboard'] as List)
-            .map((json) => User.fromJson(json))
-            .toList();
-        yourRank = data['your_rank'] as int?;
-        yourPoints = data['your_points'] as int? ?? yourPoints; // Usa i punti dalla classifica se disponibili
-        // Se il server fornisce l'username, aggiorna l'username
-        if (data['your_username'] != null && data['your_username'].toString().isNotEmpty) {
-          username = data['your_username'];
-        }
         isLoading = false;
       });
-    } else {
-      // Gestisci l'errore come preferisci, ad esempio mostrando un messaggio
-      setState(() {
-        isLoading = false;
-      });
-      // Opzionale: Mostra un messaggio di errore
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Errore nel recupero della classifica. Riprova più tardi.')),
       );
+      print('Eccezione durante fetchLeaderboard: $e');
     }
   }
 

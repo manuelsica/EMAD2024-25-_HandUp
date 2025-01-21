@@ -1,3 +1,5 @@
+// lib/multiplayer_home.dart
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -87,9 +89,14 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       socketService = Provider.of<SocketService>(context, listen: false);
-      socketService.connect();
+      await socketService.connect();
 
+      // Ascolta lo stream delle lobby
+      final lobbyProvider = Provider.of<LobbyProvider>(context, listen: false);
+
+      // Listener per lobbyCreated
       socketService.lobbyCreatedStream.listen((lobby) {
+        lobbyProvider.addLobby(lobby);
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -98,8 +105,8 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
         );
       });
 
+      // Listener per joinedLobby
       socketService.joinedLobbyStream.listen((lobbyId) {
-        final lobbyProvider = Provider.of<LobbyProvider>(context, listen: false);
         final joinedLobby = lobbyProvider.lobbies.firstWhere(
           (l) => l.lobbyId == lobbyId,
           orElse: () => Lobby(
@@ -122,7 +129,18 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
         );
       });
 
+      // Listener per errori
+      socketService.errorStream.listen((error) {
+        _showMessage(error, isError: true);
+      });
+
       await _fetchUserData();
+
+      // Richiedi l'elenco delle lobby una volta connesso
+      socketService.getLobbies();
+
+      // Opzionale: Puoi impostare un intervallo per aggiornare le lobby periodicamente
+      // _startLobbyRefreshTimer();
     });
   }
 
@@ -188,7 +206,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
   /// Crea la lobby
   void _createLobby() async {
     // Chiudiamo l’eventuale tastiera
-    // FocusScope.of(context).unfocus();
+    FocusScope.of(context).unfocus();
 
     if (_lobbyName.isEmpty) {
       _showMessage('Il nome della lobby è obbligatorio.', isError: true);
@@ -222,9 +240,11 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
   }
 
   /// Refresh lobbies
-  void _refreshLobbies() {
+  Future<void> _refreshLobbies() async {
     FocusScope.of(context).unfocus();
     socketService.getLobbies();
+    // Mostra un messaggio se desiderato
+    _showMessage('Le lobby sono state aggiornate.');
   }
 
   /// Costruisce un tile di una lobby
@@ -358,7 +378,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
         FocusScope.of(context).unfocus();
         _textFieldFocusNodeNome.unfocus();
         _textFieldFocusNodePass.unfocus();
-      },  // Tocca sfondo -> chiude tastiera
+      }, // Tocca sfondo -> chiude tastiera
       child: Scaffold(
         drawer: SideMenu(),
         body: SafeArea(
@@ -374,7 +394,7 @@ class _MultiplayerHomeScreenState extends State<MultiplayerHomeScreen>
                   ),
                   Expanded(
                     child: RefreshIndicator(
-                      onRefresh: () async => _refreshLobbies(),
+                      onRefresh: _refreshLobbies,
                       child: SingleChildScrollView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.all(16.0),
