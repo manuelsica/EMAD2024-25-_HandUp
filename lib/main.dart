@@ -14,6 +14,7 @@ import 'modalita_screen.dart';
 import 'login.dart';
 import 'registration.dart';
 import 'intro_screen.dart';
+import "animated_button.dart";
 import 'risultati_partita.dart'; // Assicurati di avere questa schermata
 
 void main() {
@@ -94,57 +95,61 @@ class LandingPageScreen extends StatelessWidget {
                 ),
 
                 // Start Now Button
-                Container(
-                  width: screenWidth * 0.5,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.textColor1.withOpacity(0.5),
-                        blurRadius: 20,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
+                AnimatedButton(
+                  onPressed: () {},
+                  isLocked: false,
                   child: Container(
+                    width: screenWidth * 0.5,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Color.fromARGB(110, 214, 57, 196),
-                          Color.fromARGB(110, 255, 0, 208),
-                          Color.fromARGB(110, 140, 53, 232)
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
                       borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.textColor1.withOpacity(0.5),
+                          blurRadius: 20,
+                          spreadRadius: 2,
+                        ),
+                      ],
                     ),
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: screenWidth * 0.1,
-                          vertical: screenHeight * 0.015,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Color.fromARGB(110, 214, 57, 196),
+                            Color.fromARGB(110, 255, 0, 208),
+                            Color.fromARGB(110, 140, 53, 232)
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        elevation: 0,
-                        shadowColor: Colors.transparent,
+                        borderRadius: BorderRadius.circular(30),
                       ),
-                      onPressed: () {
-                        // Naviga alla schermata IntroScreen
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const IntroScreen()),
-                        );
-                      },
-                      child: Text(
-                        'Inizia Ora',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: screenWidth * 0.045,
-                          fontWeight: FontWeight.bold,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: screenWidth * 0.1,
+                            vertical: screenHeight * 0.015,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          elevation: 0,
+                          shadowColor: Colors.transparent,
+                        ),
+                        onPressed: () {
+                          // Naviga alla schermata IntroScreen
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const IntroScreen()),
+                          );
+                        },
+                        child: Text(
+                          'Inizia Ora',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: screenWidth * 0.045,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),

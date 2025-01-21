@@ -641,6 +641,9 @@ class _GameScreenSpellingState extends State<GameScreenSpelling> {
 
   /// Costruisce la UI mostrata mentre si aspetta che tutti i giocatori siano presenti
   Widget _buildWaitingUI() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -648,7 +651,7 @@ class _GameScreenSpellingState extends State<GameScreenSpelling> {
           const CircularProgressIndicator(
             color: Colors.white,
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: screenHeight * 0.02),
           Text(
             "Attesa player...",
             style: TextStyle(

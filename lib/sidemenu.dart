@@ -9,6 +9,8 @@ import 'login.dart';
 import 'registration.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import "shop_screen.dart";
+import "selezione_gioco.dart";
+import "difficulty_selection.dart";
 
 class SideMenu extends StatefulWidget {
   SideMenu({Key? key}) : super(key: key);
@@ -85,6 +87,9 @@ class _SideMenuState extends State<SideMenu> {
   }
 
   Widget _buildLoggedInMenu(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return ListView(
       padding: EdgeInsets.zero,
       children: [
@@ -103,7 +108,7 @@ class _SideMenuState extends State<SideMenu> {
                     backgroundColor: Colors.purple,
                     child: Icon(Icons.person, size: 35, color: Colors.white),
                   ),
-                  const SizedBox(height: 10),
+                  SizedBox(height: screenHeight * 0.01),
                   Text(
                     _username,
                     style: const TextStyle(fontSize: 18, color: Colors.white),
@@ -133,7 +138,7 @@ class _SideMenuState extends State<SideMenu> {
           onTap: () {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const Home()),
+              MaterialPageRoute(builder: (context) => const GameSelectionScreen()),
             );
           },
         ),
@@ -196,16 +201,21 @@ class _SideMenuState extends State<SideMenu> {
         ListTile(
           leading: const Icon(Icons.settings, color: Colors.white),
           title: const Text('Settings', style: TextStyle(color: Colors.white)),
-          onTap: () {
-            Navigator.pop(context);
-            // Aggiungi la logica per aprire le impostazioni se necessario
-          },
+          // onTap: () {
+          //   Navigator.pushReplacement(
+          //     context,
+          //     MaterialPageRoute(builder: (context) => DifficultySelectionScreen()),
+          //   );
+          // },
         ),
       ],
     );
   }
 
   Widget _buildLoggedOutMenu(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return ListView(
       padding: EdgeInsets.zero,
       children: [
@@ -222,7 +232,7 @@ class _SideMenuState extends State<SideMenu> {
                 backgroundColor: Colors.purple,
                 child: Icon(Icons.person_outline, size: 35, color: Colors.white),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: screenHeight * 0.01),
               const Text(
                 'Benvenuto',
                 style: TextStyle(fontSize: 18, color: Colors.white),

@@ -13,6 +13,7 @@ import 'package:hand_up_interface/risultati_singleplayer.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import "top_bar.dart";
 import "backend_config.dart";
+import "animated_button.dart";
 
 class GameScreen extends StatefulWidget {
   final List<String> words; // Lista di parole passate dal ModalitaScreen
@@ -502,42 +503,46 @@ class _GameScreenState extends State<GameScreen>
                       ),
                     ),
                     // Bottone Skip
-                    Container(
-                      width: skipButtonWidth,
-                      height: skipButtonHeight,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(skipButtonHeight / 2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color.fromARGB(255, 233, 30, 196).withOpacity(0.8),
-                            blurRadius: 20,
-                            spreadRadius: 4,
-                            offset: const Offset(0, 0),
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.purple,
-                          padding: EdgeInsets.symmetric(
-                            horizontal: skipButtonWidth * 0.1,
-                            vertical: skipButtonHeight * 0.3,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(skipButtonHeight / 2),
-                          ),
-                          elevation: 0,
-                          shadowColor: Colors.transparent,
+                    AnimatedButton(
+                      onPressed: () {},
+                      isLocked: false,
+                      child: Container(
+                        width: skipButtonWidth,
+                        height: skipButtonHeight,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(skipButtonHeight / 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color.fromARGB(255, 233, 30, 196).withOpacity(0.8),
+                              blurRadius: 20,
+                              spreadRadius: 4,
+                              offset: const Offset(0, 0),
+                            ),
+                          ],
                         ),
-                        onPressed: () {
-                          _moveToNextWord();
-                        },
-                        child: Text(
-                          'Skip',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: skipButtonFontSize,
-                            fontWeight: FontWeight.bold,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.purple,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: skipButtonWidth * 0.1,
+                              vertical: skipButtonHeight * 0.3,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(skipButtonHeight / 2),
+                            ),
+                            elevation: 0,
+                            shadowColor: Colors.transparent,
+                          ),
+                          onPressed: () {
+                            _moveToNextWord();
+                          },
+                          child: Text(
+                            'Skip',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: skipButtonFontSize,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),

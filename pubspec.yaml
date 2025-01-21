@@ -98,6 +98,11 @@ flutter:
     - assets/matematica.png
     - assets/scarabeo.png
     - assets/ads.png
+    - assets/playing_hand.png
+    - assets/spelling_bee.png
+    - assets/difficulty.png
+    - assets/letteraa.png
+    - assets/letterav.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -164,7 +164,7 @@ class _LeaderboardHomeScreenState extends State<LeaderboardHomeScreen> {
           ),
           child: Row(
             children: [
-              SizedBox(width: avatarSize + 16),
+              SizedBox(width: (avatarSize + 16)),
               // Visualizzazione posizione
               Expanded(
                 child: Column(
@@ -195,7 +195,7 @@ class _LeaderboardHomeScreenState extends State<LeaderboardHomeScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  SizedBox(height: isFirst ? 35 : isSecond ? 25 : 17),
+                  SizedBox(height: isFirst ? screenHeight * 0.035 : isSecond ? screenHeight * 0.025 : screenHeight * 0.017),
                   AppColors.gradientText(
                       "Punti: $points", screenWidth * 0.035),
                 ],

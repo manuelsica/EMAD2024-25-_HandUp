@@ -12,6 +12,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import "backend_config.dart";
 import 'package:provider/provider.dart';
 import 'socket_service.dart';
+import "main.dart";
+import "selezione_gioco.dart";
+import "animated_button.dart";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -137,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const Home()),
+              MaterialPageRoute(builder: (context) => const GameSelectionScreen()),
             );
           } else {
             _showMessage('Dati utente mancanti nella risposta del server.', isError: true);
@@ -209,7 +212,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 setState(() {
                   _allowPop = true;
                 });
-                Navigator.of(context).pop();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => MyApp()),
+                );
+
               },
             ),
           ),
@@ -294,63 +301,67 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       // Bottone Login
-                      Container(
-                        margin: EdgeInsets.only(top: screenHeight * 0.025),
-                        width: screenWidth * 0.5,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(30),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.textColor1.withOpacity(0.5),
-                              blurRadius: 20,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                        ),
+                      AnimatedButton(
+                        onPressed: () {},
+                        isLocked: false,
                         child: Container(
+                          margin: EdgeInsets.only(top: screenHeight * 0.025),
+                          width: screenWidth * 0.5,
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [
-                                Color.fromARGB(110, 214, 57, 196),
-                                Color.fromARGB(110, 255, 0, 208),
-                                Color.fromARGB(110, 140, 53, 232),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
                             borderRadius: BorderRadius.circular(30),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.textColor1.withOpacity(0.5),
+                                blurRadius: 20,
+                                spreadRadius: 2,
+                              ),
+                            ],
                           ),
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              padding: EdgeInsets.symmetric(
-                                horizontal: screenWidth * 0.1,
-                                vertical: screenHeight * 0.015,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [
+                                  Color.fromARGB(110, 214, 57, 196),
+                                  Color.fromARGB(110, 255, 0, 208),
+                                  Color.fromARGB(110, 140, 53, 232),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              elevation: 0,
-                              shadowColor: Colors.transparent,
+                              borderRadius: BorderRadius.circular(30),
                             ),
-                            onPressed: _isLoading ? null : _login,
-                            child: _isLoading
-                                ? SizedBox(
-                                    width: screenWidth * 0.05,
-                                    height: screenWidth * 0.05,
-                                    child: const CircularProgressIndicator(
-                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                      strokeWidth: 2.0,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: screenWidth * 0.1,
+                                  vertical: screenHeight * 0.015,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                elevation: 0,
+                                shadowColor: Colors.transparent,
+                              ),
+                              onPressed: _isLoading ? null : _login,
+                              child: _isLoading
+                                  ? SizedBox(
+                                      width: screenWidth * 0.05,
+                                      height: screenWidth * 0.05,
+                                      child: const CircularProgressIndicator(
+                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        strokeWidth: 2.0,
+                                      ),
+                                    )
+                                  : Text(
+                                      'Entra',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: screenWidth * 0.045,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  )
-                                : Text(
-                                    'Entra',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: screenWidth * 0.045,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                            ),
                           ),
                         ),
                       ),

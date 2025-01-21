@@ -135,17 +135,10 @@ class _ShopScreenState extends State<ShopScreen> {
       height: 150, // Fixed height for consistency
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          colors: [
-            Colors.purple.shade900.withOpacity(0.3),
-            Colors.purple.shade800.withOpacity(0.3),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
         border: Border.all(
-          color: AppColors.textColor1.withOpacity(0.3),
+          color: AppColors.textColor2,
           width: 2,
         ),
       ),
@@ -196,12 +189,8 @@ class _ShopScreenState extends State<ShopScreen> {
       padding: const EdgeInsets.all(16),
       height: 90, // Fixed height for consistency
       decoration: BoxDecoration(
-        color: Colors.transparent,
+        color: AppColors.containerOpaqueColor,
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-          color: AppColors.textColor1.withOpacity(0.3),
-          width: 2,
-        ),
       ),
       child: Stack(
         clipBehavior: Clip.none,
@@ -230,7 +219,7 @@ class _ShopScreenState extends State<ShopScreen> {
                       fontSize: screenWidth * 0.035,
                     ),
                   ),
-                  SizedBox(width: 8),
+                  SizedBox(width: screenWidth * 0.008),
                   Text(
                     "$points",
                     style: TextStyle(
@@ -263,12 +252,8 @@ class _ShopScreenState extends State<ShopScreen> {
       padding: const EdgeInsets.all(12),
       height: 90, // Fixed height for consistency
       decoration: BoxDecoration(
-        color: Colors.transparent,
+        color: AppColors.containerOpaqueColor,
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-          color: AppColors.textColor1.withOpacity(0.3),
-          width: 2,
-        ),
       ),
       child: Stack(
         clipBehavior: Clip.none,

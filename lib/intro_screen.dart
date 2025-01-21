@@ -7,6 +7,7 @@ import "app_colors.dart";
 import 'package:google_fonts/google_fonts.dart';
 import "registration.dart";
 import "top_bar.dart";
+import "animated_button.dart";
 
 class IntroScreen extends StatefulWidget {
   const IntroScreen({Key? key}) : super(key: key);
@@ -98,7 +99,7 @@ class _IntroScreenState extends State<IntroScreen> {
                                           ),
                                         ),
                                       ),
-                                      SizedBox(height: 10),
+                                      SizedBox(height: screenHeight * 0.01),
                                       // Blocco di testo
                                       Container(
                                         width: screenWidth * 0.55,
@@ -142,7 +143,7 @@ class _IntroScreenState extends State<IntroScreen> {
                             ),
                           ),
 
-                          SizedBox(height: 30),
+                          SizedBox(height: screenHeight * 0.03),
 
                           // Sezioni delle varie categorie
                           _buildSection(
@@ -152,7 +153,7 @@ class _IntroScreenState extends State<IntroScreen> {
                             screenWidth,
                           ),
                           // Separatore per dare il giusto spazio tra sezioni
-                          SizedBox(height: 20),
+                          SizedBox(height: screenHeight * 0.02),
 
                           _buildSection(
                             context,
@@ -161,7 +162,7 @@ class _IntroScreenState extends State<IntroScreen> {
                             screenWidth,
                           ),
 
-                          SizedBox(height: 20),
+                          SizedBox(height: screenHeight * 0.02),
 
                           _buildSection(
                             context,
@@ -169,63 +170,67 @@ class _IntroScreenState extends State<IntroScreen> {
                             'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur imperdiet ex vel libero pharetra, vita e posuere purus egestas.',
                             screenWidth,
                           ),
-                          SizedBox(height: 20),
+                          SizedBox(height: screenHeight * 0.02),
 
                           // Pulsante di Registrazione
-                          Center(
-                            child: Container(
-                              width: screenWidth * 0.5,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(30),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.textColor1.withOpacity(0.5),
-                                    blurRadius: 20,
-                                    spreadRadius: 2,
-                                  ),
-                                ],
-                              ),
+                          AnimatedButton(
+                            onPressed: () {},
+                            isLocked: false,
+                            child: Center(
                               child: Container(
+                                width: screenWidth * 0.5,
                                 decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      Color.fromARGB(110, 214, 57, 196),
-                                      Color.fromARGB(110, 255, 0, 208),
-                                      Color.fromARGB(110, 140, 53, 232)
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
                                   borderRadius: BorderRadius.circular(30),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.textColor1.withOpacity(0.5),
+                                      blurRadius: 20,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
                                 ),
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.transparent,
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: screenWidth * 0.1,
-                                      vertical: screenHeight * 0.015,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Color.fromARGB(110, 214, 57, 196),
+                                        Color.fromARGB(110, 255, 0, 208),
+                                        Color.fromARGB(110, 140, 53, 232)
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
                                     ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(30),
-                                    ),
-                                    elevation: 0,
-                                    shadowColor: Colors.transparent,
+                                    borderRadius: BorderRadius.circular(30),
                                   ),
-                                  onPressed: () {
-                                    // Naviga alla schermata di Registrazione
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              const RegistrationPage()),
-                                    );
-                                  },
-                                  child: Text(
-                                    'Registrati Ora',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: screenWidth * 0.035,
-                                      fontWeight: FontWeight.bold,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.transparent,
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: screenWidth * 0.1,
+                                        vertical: screenHeight * 0.015,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(30),
+                                      ),
+                                      elevation: 0,
+                                      shadowColor: Colors.transparent,
+                                    ),
+                                    onPressed: () {
+                                      // Naviga alla schermata di Registrazione
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                const RegistrationPage()),
+                                      );
+                                    },
+                                    child: Text(
+                                      'Registrati Ora',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: screenWidth * 0.035,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ),
