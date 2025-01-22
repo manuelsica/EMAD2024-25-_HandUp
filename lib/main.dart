@@ -50,13 +50,19 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'HandUp App', // Aggiungi un titolo per la tua app
+      title: 'HandUp', // Titolo dell'app
       theme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: AppColors.backgroundColor,
         textTheme: GoogleFonts.poppinsTextTheme(),
       ),
-      home: const LandingPageScreen(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const LandingPageScreen(),
+        '/intro': (context) => const IntroScreen(),
+        '/login': (context) => const LoginPage(),
+        '/registration': (context) => const RegistrationPage(),
+      },
       debugShowCheckedModeBanner: false, // Rimuove il debug banner
     );
   }
@@ -72,7 +78,7 @@ class LandingPageScreen extends StatelessWidget {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return WillPopScope(
-      onWillPop: () async => false,
+      onWillPop: () async => false, // Impedisce di chiudere l'app con il pulsante back
       child: Scaffold(
         body: SafeArea(
           child: Center(
@@ -96,7 +102,9 @@ class LandingPageScreen extends StatelessWidget {
 
                 // Start Now Button
                 AnimatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/intro');
+                  },
                   isLocked: false,
                   child: Container(
                     width: screenWidth * 0.5,
@@ -138,10 +146,7 @@ class LandingPageScreen extends StatelessWidget {
                         ),
                         onPressed: () {
                           // Naviga alla schermata IntroScreen
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const IntroScreen()),
-                          );
+                          Navigator.pushNamed(context, '/intro');
                         },
                         child: Text(
                           'Inizia Ora',
@@ -161,10 +166,7 @@ class LandingPageScreen extends StatelessWidget {
                 // Login Text Button
                 TextButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const LoginPage()),
-                    );
+                    Navigator.pushNamed(context, '/login');
                   },
                   child: AppColors.gradientText('Login', screenWidth * 0.04),
                 ),
@@ -172,10 +174,7 @@ class LandingPageScreen extends StatelessWidget {
                 // Registrati Text Button
                 TextButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const RegistrationPage()),
-                    );
+                    Navigator.pushNamed(context, '/registration');
                   },
                   child: AppColors.gradientText('Registrati', screenWidth * 0.04),
                 ),

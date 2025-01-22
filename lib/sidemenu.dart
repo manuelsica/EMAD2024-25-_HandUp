@@ -11,6 +11,10 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import "shop_screen.dart";
 import "selezione_gioco.dart";
 import "difficulty_selection.dart";
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'main.dart';
+import 'backend_config.dart';
 
 class SideMenu extends StatefulWidget {
   SideMenu({Key? key}) : super(key: key);
@@ -24,6 +28,8 @@ class _SideMenuState extends State<SideMenu> {
   String _username = 'Username'; // Valore di default
   int _points = 0; // Valore di default
   bool _isLoggedIn = false; // Variabile per gestire lo stato di login
+
+  final String logoutUrl = BackendConfig.baseUrl + 'logout';
 
   @override
   void initState() {
@@ -52,19 +58,60 @@ class _SideMenuState extends State<SideMenu> {
     }
   }
 
+  /// Funzione per effettuare il logout lato server
+  Future<bool> _logoutServer(String token) async {
+    final url = Uri.parse(logoutUrl);
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        print('Errore nel logout server: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Eccezione durante il logout server: $e');
+      return false;
+    }
+  }
+
+  /// Funzione di logout che gestisce sia il lato client che il lato server
   Future<void> _logout(BuildContext context) async {
-    await storage.delete(key: 'access_token');
-    await storage.delete(key: 'username');
-    await storage.delete(key: 'points');
-    setState(() {
-      _isLoggedIn = false;
-      _username = 'Username';
-      _points = 0;
-    });
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const LoginPage()),
-      (Route<dynamic> route) => false,
-    );
+    String? token = await storage.read(key: 'access_token');
+    if (token != null) {
+      final logoutSuccess = await _logoutServer(token);
+      if (logoutSuccess) {
+        await storage.delete(key: 'access_token');
+        await storage.delete(key: 'username');
+        await storage.delete(key: 'points');
+        setState(() {
+          _isLoggedIn = false;
+          _username = 'Username';
+          _points = 0;
+        });
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LandingPageScreen()), // Reindirizza a LandingPageScreen
+          (Route<dynamic> route) => false, // Rimuove tutte le schermate precedenti
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Errore durante il logout. Riprova.')),
+        );
+      }
+    } else {
+      // Se non c'è un token, naviga comunque verso LandingPageScreen
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const LandingPageScreen()), // Reindirizza a LandingPageScreen
+        (Route<dynamic> route) => false, // Rimuove tutte le schermate precedenti
+      );
+    }
   }
 
   @override
@@ -131,16 +178,64 @@ class _SideMenuState extends State<SideMenu> {
             ],
           ),
         ),
-        // Pulsante per tornare alla home
-        ListTile(
-          leading: const Icon(Icons.home, color: Colors.white),
-          title: const Text('Home', style: TextStyle(color: Colors.white)),
-          onTap: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const GameSelectionScreen()),
-            );
-          },
+        // Menu a tendina "Singleplayer"
+        ExpansionTile(
+          leading: const Icon(Icons.gamepad, color: Colors.white), // Icona valida per Singleplayer
+          title: const Text('Singleplayer', style: TextStyle(color: Colors.white)),
+          children: [
+             // Aggiunta del pulsante "Home"
+            ListTile(
+              leading: const Icon(Icons.home, color: Colors.white),
+              title: const Text('Home', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context); // Chiudi il drawer
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const GameSelectionScreen()), // Naviga a selezione_gioco.dart
+                  (Route<dynamic> route) => false, // Rimuove tutte le schermate precedenti
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.question_mark, color: Colors.white),
+              title: const Text('Impiccato', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context); // Chiudi il drawer
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const GameSelectionScreen(), // Naviga a selezione_gioco.dart
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.calculate, color: Colors.white), // Icona per Giochi Matematici
+              title: const Text('Giochi Matematici', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context); // Chiudi il drawer
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const GameSelectionScreen(), // Naviga a selezione_gioco.dart
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.spellcheck, color: Colors.white), // Icona per Spelling
+              title: const Text('Spelling', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context); // Chiudi il drawer
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const Home(), // Naviga a Home.dart
+                  ),
+                );
+              },
+            ),
+          ],
         ),
         // Pulsante per accedere alla modalità multiplayer
         ListTile(
@@ -157,9 +252,9 @@ class _SideMenuState extends State<SideMenu> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Devi effettuare il login per accedere a Multiplayer')),
               );
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginPage()),
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const LandingPageScreen()), // Reindirizza a LandingPageScreen
+                (Route<dynamic> route) => false,
               );
             }
           },
@@ -204,7 +299,7 @@ class _SideMenuState extends State<SideMenu> {
           // onTap: () {
           //   Navigator.pushReplacement(
           //     context,
-          //     MaterialPageRoute(builder: (context) => DifficultySelectionScreen()),
+          //     MaterialPageRoute(builder: (context) => SettingsSelectionScreen()),
           //   );
           // },
         ),
@@ -252,10 +347,7 @@ class _SideMenuState extends State<SideMenu> {
               padding: const EdgeInsets.symmetric(vertical: 12.0),
             ),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginPage()),
-              );
+              Navigator.pushNamed(context, '/login');
             },
             child: const Text(
               'Login',
@@ -275,10 +367,7 @@ class _SideMenuState extends State<SideMenu> {
               padding: const EdgeInsets.symmetric(vertical: 12.0),
             ),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const RegistrationPage()),
-              );
+              Navigator.pushNamed(context, '/registration');
             },
             child: const Text(
               'Registrati',

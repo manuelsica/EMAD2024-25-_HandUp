@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'home.dart';
-import "sidemenu.dart";
-import "app_colors.dart";
-import "top_bar.dart";
+import 'app_colors.dart';
+import 'top_bar.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import "backend_config.dart";
+import 'backend_config.dart';
 import 'game_screen_spelling.dart';
 
 class DifficultySelectionScreen extends StatefulWidget {
@@ -110,102 +109,106 @@ class _DifficultySelectionScreenState extends State<DifficultySelectionScreen> {
 
     if (isLoading) {
       return Scaffold(
-        drawer: SideMenu(),
+        // Rimosso il drawer: SideMenu(),
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      drawer: SideMenu(),
+      // Rimosso il drawer: SideMenu(),
       body: Container(
         decoration: const BoxDecoration(
           color: AppColors.backgroundColor,
         ),
         child: SafeArea(
-          child: Column(
+          child: Stack(
             children: [
-              TopBar(
-                username: username,
-                points: points,
-                showMenu: true,
-                showUser: true,
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        //Container informativo
-                        Container(
-                          width: double.infinity,
-                          height: screenHeight * 0.25,
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            color: Colors.transparent,
-                            border: Border.all(
-                              color: AppColors.textColor2,
-                              width: 2,
-                            ),
-                          ),
-                          child: Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+              Column(
+                children: [
+                  TopBar(
+                    username: username,
+                    points: points,
+                    showMenu: false, // Imposta showMenu su false per nascondere il menu
+                    showUser: true,
+                  ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Container informativo
+                            Container(
+                              width: double.infinity,
+                              height: screenHeight * 0.25,
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                color: Colors.transparent,
+                                border: Border.all(
+                                  color: AppColors.textColor2,
+                                  width: 2,
+                                ),
+                              ),
+                              child: Stack(
+                                clipBehavior: Clip.none,
                                 children: [
-                                  AppColors.gradientText(
-                                    "Seleziona la\nDifficoltà",
-                                    screenWidth * 0.08,
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      AppColors.gradientText(
+                                        "Seleziona la\nDifficoltà",
+                                        screenWidth * 0.08,
+                                      ),
+                                    ],
+                                  ),
+                                  Positioned(
+                                    right: -45,
+                                    bottom: -50,
+                                    child: Image.asset(
+                                      'assets/difficulty.png',
+                                      width: screenWidth * 0.6,
+                                      height: screenWidth * 0.6,
+                                    ),
                                   ),
                                 ],
                               ),
-                              Positioned(
-                                right: -45,
-                                bottom: -50,
-                                child: Image.asset(
-                                  'assets/difficulty.png',
-                                  width: screenWidth * 0.6,
-                                  height: screenWidth * 0.6,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                            SizedBox(height: screenHeight * 0.06),
+                            DifficultyButton(
+                              title: "Facile",
+                              screenWidth: screenWidth,
+                              difficulty: "facile",
+                              onPressed: () =>
+                                  navigateToGameScreen(context, "facile"),
+                            ),
+                            SizedBox(height: screenHeight * 0.04),
+                            DifficultyButton(
+                              title: "Medio",
+                              screenWidth: screenWidth,
+                              difficulty: "medio",
+                              onPressed: () =>
+                                  navigateToGameScreen(context, "medio"),
+                            ),
+                            SizedBox(height: screenHeight * 0.04),
+                            DifficultyButton(
+                              title: "Difficile",
+                              screenWidth: screenWidth,
+                              difficulty: "difficile",
+                              onPressed: () =>
+                                  navigateToGameScreen(context, "difficile"),
+                            ),
+                          ],
                         ),
-                        SizedBox(height: screenHeight * 0.06),
-                        DifficultyButton(
-                          title: "Facile",
-                          screenWidth: screenWidth,
-                          difficulty: "facile",
-                          onPressed: () =>
-                              navigateToGameScreen(context, "facile"),
-                        ),
-                        SizedBox(height: screenHeight * 0.04),
-                        DifficultyButton(
-                          title: "Medio",
-                          screenWidth: screenWidth,
-                          difficulty: "medio",
-                          onPressed: () =>
-                              navigateToGameScreen(context, "medio"),
-                        ),
-                        SizedBox(height: screenHeight * 0.04),
-                        DifficultyButton(
-                          title: "Difficile",
-                          screenWidth: screenWidth,
-                          difficulty: "difficile",
-                          onPressed: () =>
-                              navigateToGameScreen(context, "difficile"),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
-              // Back button at the bottom-left corner
+              // **Spostato il bottone back arrow all'angolo in alto a sinistra**
               Align(
-                alignment: Alignment.bottomLeft,
+                alignment: Alignment.topLeft,
                 child: Padding(
                   padding: const EdgeInsets.all(15),
                   child: IconButton(
@@ -217,10 +220,12 @@ class _DifficultySelectionScreenState extends State<DifficultySelectionScreen> {
                       ),
                     ),
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => Home()),
-                      );
+                      Navigator.pop(context);
+                      // Se preferisci tornare a Home direttamente, puoi usare:
+                      // Navigator.pushReplacement(
+                      //   context,
+                      //   MaterialPageRoute(builder: (context) => const Home()),
+                      // );
                     },
                   ),
                 ),
@@ -233,7 +238,7 @@ class _DifficultySelectionScreenState extends State<DifficultySelectionScreen> {
   }
 }
 
-//Classe per bottone con animazione
+// Classe per bottone con animazione
 class DifficultyButton extends StatefulWidget {
   final String title;
   final double screenWidth;

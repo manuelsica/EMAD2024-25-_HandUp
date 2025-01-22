@@ -6,35 +6,37 @@ import 'home.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import "backend_config.dart";
+import 'backend_config.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import "selezione_gioco.dart";
-import "main.dart";
-import "animated_button.dart";
-
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]).then((_) {
-    runApp(const RegistrationPage());
-  });
-}
+import 'selezione_gioco.dart';
+import 'animated_button.dart';
+import 'package:provider/provider.dart';
+import 'socket_service.dart';
 
 class RegistrationPage extends StatelessWidget {
   const RegistrationPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: AppColors.backgroundColor,
-        textTheme: GoogleFonts.poppinsTextTheme(),
+    return Scaffold(
+      appBar: AppBar(
+        title: AppColors.gradientText('Registrazione', MediaQuery.of(context).size.width * 0.05),
+        backgroundColor: AppColors.backgroundColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: CustomPaint(
+            size: const Size(45, 45),
+            painter: GradientIconPainter(
+              icon: Icons.arrow_back,
+              gradient: AppColors.textGradient,
+            ),
+          ),
+          onPressed: () {
+            Navigator.pop(context); // Torna alla schermata precedente
+          },
+        ),
       ),
-      home: const RegistrationScreen(),
-      debugShowCheckedModeBanner: false,
+      body: const RegistrationScreen(),
     );
   }
 }
@@ -47,11 +49,10 @@ class RegistrationScreen extends StatefulWidget {
 }
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
+  final TextEditingController _usernameController       = TextEditingController();
+  final TextEditingController _emailController          = TextEditingController();
+  final TextEditingController _passwordController       = TextEditingController();
+  final TextEditingController _confirmPasswordController= TextEditingController();
 
   final FlutterSecureStorage storage = const FlutterSecureStorage();
 
@@ -150,13 +151,17 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           await storage.write(key: 'points', value: points.toString());
 
           _showMessage('Registrazione avvenuta con successo.');
+
+          // Avvia la connessione Socket.IO
+          final socketService = Provider.of<SocketService>(context, listen: false);
+          await socketService.connect();
+
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const GameSelectionScreen()),
           );
         } else {
-          _showMessage('Token o ID utente non ricevuti dal server.',
-              isError: true);
+          _showMessage('Token o ID utente non ricevuti dal server.', isError: true);
         }
       } else {
         _showMessage(
@@ -186,7 +191,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
+    final screenWidth  = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
     return GestureDetector(
@@ -209,29 +214,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         },
         child: Scaffold(
           backgroundColor: AppColors.backgroundColor,
-          appBar: AppBar(
-            title: AppColors.gradientText('Registrazione', screenWidth * 0.05),
-            backgroundColor: AppColors.backgroundColor,
-            elevation: 0,
-            leading: IconButton(
-              icon: CustomPaint(
-                size: const Size(45, 45),
-                painter: GradientIconPainter(
-                  icon: Icons.arrow_back,
-                  gradient: AppColors.textGradient,
-                ),
-              ),
-              onPressed: () {
-                setState(() {
-                  _allowPop = true;
-                });
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => MyApp()),
-                );
-              },
-            ),
-          ),
           body: SafeArea(
             child: SingleChildScrollView(
               child: Center(
@@ -240,6 +222,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      SizedBox(height: screenHeight * 0.02),
                       // Logo
                       Container(
                         margin: EdgeInsets.only(
@@ -258,7 +241,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           },
                         ),
                       ),
-      
+
                       // Username
                       Container(
                         width: screenWidth * 0.8,
@@ -285,7 +268,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           ),
                         ),
                       ),
-      
+
                       // Email
                       Container(
                         width: screenWidth * 0.8,
@@ -313,7 +296,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           ),
                         ),
                       ),
-      
+
                       // Password
                       Container(
                         width: screenWidth * 0.8,
@@ -341,7 +324,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           ),
                         ),
                       ),
-      
+
                       // Conferma Password
                       Container(
                         width: screenWidth * 0.8,
@@ -369,7 +352,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           ),
                         ),
                       ),
-      
+
                       // Bottone Registrati
                       AnimatedButton(
                         onPressed: () {},
@@ -419,8 +402,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                       width: screenWidth * 0.05,
                                       height: screenWidth * 0.05,
                                       child: const CircularProgressIndicator(
-                                        valueColor: AlwaysStoppedAnimation<Color>(
-                                            Colors.white),
+                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                         strokeWidth: 2.0,
                                       ),
                                     )
@@ -444,6 +426,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           ),
         ),
       ),
-    );
-  }
-}
+        );
+      }
+    }

@@ -9,37 +9,37 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import "backend_config.dart";
+import 'backend_config.dart';
 import 'package:provider/provider.dart';
 import 'socket_service.dart';
-import "main.dart";
-import "selezione_gioco.dart";
-import "animated_button.dart";
-
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]).then((_) {
-    runApp(const LoginPage());
-  });
-}
+import 'selezione_gioco.dart';
+import 'animated_button.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Login',
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: AppColors.backgroundColor,
-        textTheme: GoogleFonts.poppinsTextTheme(),
+    // Rimuovi MaterialApp qui
+    return Scaffold(
+      appBar: AppBar(
+        title: AppColors.gradientText('Login', MediaQuery.of(context).size.width * 0.05),
+        backgroundColor: AppColors.backgroundColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: CustomPaint(
+            size: const Size(45, 45),
+            painter: GradientIconPainter(
+              icon: Icons.arrow_back,
+              gradient: AppColors.textGradient,
+            ),
+          ),
+          onPressed: () {
+            Navigator.pop(context); // Torna alla schermata precedente
+          },
+        ),
       ),
-      home: const LoginScreen(),
-      debugShowCheckedModeBanner: false,
+      body: const LoginScreen(),
     );
   }
 }
@@ -196,30 +196,6 @@ class _LoginScreenState extends State<LoginScreen> {
         },
         child: Scaffold(
           backgroundColor: AppColors.backgroundColor,
-          appBar: AppBar(
-            title: AppColors.gradientText('Login', screenWidth * 0.05),
-            backgroundColor: AppColors.backgroundColor,
-            elevation: 0,
-            leading: IconButton(
-              icon: CustomPaint(
-                size: const Size(45, 45),
-                painter: GradientIconPainter(
-                  icon: Icons.arrow_back,
-                  gradient: AppColors.textGradient,
-                ),
-              ),
-              onPressed: () {
-                setState(() {
-                  _allowPop = true;
-                });
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => MyApp()),
-                );
-
-              },
-            ),
-          ),
           body: SafeArea(
             child: SingleChildScrollView(
               child: Center(
@@ -387,6 +363,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
-    );
-  }
-}
+        );
+      }
+    }

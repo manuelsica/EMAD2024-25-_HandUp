@@ -248,29 +248,6 @@ class _HomeState extends State<Home> {
                                 ],
                               ),
                             ),
-                            Align(
-                              alignment: Alignment.bottomLeft,
-                              child: Padding(
-                                padding: const EdgeInsets.all(15),
-                                child: IconButton(
-                                  icon: CustomPaint(
-                                    size: Size(screenWidth * 0.045,
-                                        screenHeight * 0.045),
-                                    painter: GradientIconPainter(
-                                      icon: Icons.arrow_back,
-                                      gradient: AppColors.textGradient,
-                                    ),
-                                  ),
-                                  onPressed: () {
-                                    Navigator.pop(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => GameSelectionScreen()),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
                           ],
                         ),
                       ),
