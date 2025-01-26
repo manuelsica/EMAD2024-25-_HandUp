@@ -15,6 +15,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'main.dart';
 import 'backend_config.dart';
+import "math_game_screen.dart";
+import "hangman_screen.dart";
 
 class SideMenu extends StatefulWidget {
   SideMenu({Key? key}) : super(key: key);
@@ -137,6 +139,8 @@ class _SideMenuState extends State<SideMenu> {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
+    final List<String> questions = ["x", "y"];
+
     return ListView(
       padding: EdgeInsets.zero,
       children: [
@@ -204,7 +208,7 @@ class _SideMenuState extends State<SideMenu> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const GameSelectionScreen(), // Naviga a selezione_gioco.dart
+                    builder: (context) => DifficultySelectionScreen(gameMode: "hangman"), // Naviga a selezione_gioco.dart
                   ),
                 );
               },
@@ -217,7 +221,7 @@ class _SideMenuState extends State<SideMenu> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const GameSelectionScreen(), // Naviga a selezione_gioco.dart
+                    builder: (context) => const MathGameScreen(questions: ["2 + 3 = ", "3 + 5 = "]), // Naviga a selezione_gioco.dart
                   ),
                 );
               },

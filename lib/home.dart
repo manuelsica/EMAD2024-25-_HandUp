@@ -187,7 +187,7 @@ class _HomeState extends State<Home> {
                                                                   context,
                                                                   MaterialPageRoute(
                                                                       builder: (context) =>
-                                                                          const DifficultySelectionScreen()),
+                                                                          const DifficultySelectionScreen(gameMode: "spelling")),
                                                                 );
                                                               },
                                                               child: const Padding(

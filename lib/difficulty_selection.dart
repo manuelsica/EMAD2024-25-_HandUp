@@ -9,9 +9,12 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'backend_config.dart';
 import 'game_screen_spelling.dart';
+import "hangman_screen.dart";
 
 class DifficultySelectionScreen extends StatefulWidget {
-  const DifficultySelectionScreen({Key? key}) : super(key: key);
+  final String gameMode;
+
+  const DifficultySelectionScreen({Key? key, required this.gameMode}) : super(key: key);
 
   @override
   _DifficultySelectionScreenState createState() =>
@@ -89,12 +92,27 @@ class _DifficultySelectionScreenState extends State<DifficultySelectionScreen> {
     final words = await fetchWords(difficulty);
 
     if (words.isNotEmpty) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => GameScreen(words: words),
-        ),
-      );
+      if (widget.gameMode == "spelling"){
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => GameScreen(words: words),
+          ),
+        );
+      } else if (widget.gameMode == "hangman"){
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HangmanGameScreen(words: words),
+          ),
+        );
+      }
+      // Navigator.push(
+      //   context,
+      //   MaterialPageRoute(
+      //     builder: (context) => GameScreen(words: words),
+      //   ),
+      // );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Errore nel caricamento delle parole")),

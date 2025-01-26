@@ -180,7 +180,7 @@ class RisultatiPartitaScreen extends StatelessWidget {
                                 onPressed: () {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (context) => DifficultySelectionScreen()),
+                                    MaterialPageRoute(builder: (context) => DifficultySelectionScreen(gameMode: "spelling")),
                                   );
                                 },
                                 child: Text(

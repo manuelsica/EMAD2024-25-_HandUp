@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import "package:handup/difficulty_selection.dart";
 import "sidemenu.dart";
 import "app_colors.dart";
 import "top_bar.dart";
@@ -7,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import "home.dart";
 import "animated_button.dart";
+import "modalita_screen.dart"; 
 
 
 class GameSelectionScreen extends StatefulWidget {
@@ -123,7 +125,7 @@ class _GameSelectionScreenState extends State<GameSelectionScreen> {
                             icon: "assets/impiccato.png",
                             isLocked: true,
                             screenWidth: screenWidth,
-                            gameScreen: Home(),
+                            gameScreen: DifficultySelectionScreen(gameMode: "impiccato"),
                           ),
                         ),
                         SizedBox(height: screenHeight * 0.016),
