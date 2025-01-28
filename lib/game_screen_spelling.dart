@@ -34,6 +34,9 @@ class _GameScreenState extends State<GameScreen>
   String _predictedCharacter = "Nessuna predizione"; // Risultato dal server
   bool _isProcessing = false; // Stato per prevenire richieste duplicate
   DateTime _lastSent = DateTime.now(); // Ultimo invio
+  int _correctAnswers = 0;
+  int _elapsedSeconds = 0;
+  Timer? _timer;
 
   final String serverURL = BackendConfig.predictUrl;
       // "https://2ddb-95-238-150-172.ngrok-free.app/predict/";
@@ -60,14 +63,21 @@ class _GameScreenState extends State<GameScreen>
       })
       ..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
+          _timer?.cancel();
           // Quando il timer termina, naviga alla schermata dei risultati
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => RisultatiPartitaScreen(),
+              builder: (context) => RisultatiPartitaScreen(gameMode: "spelling", gameTime: _elapsedSeconds, correctAnswers: _correctAnswers),
             ),
           );
         }
+      });
+
+      _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+        setState(() {
+          _elapsedSeconds++;
+        });
       });
     _timerController.forward();
 
@@ -151,6 +161,7 @@ class _GameScreenState extends State<GameScreen>
       if (currentWord[i] == char && !_letterCompletionStatus[i]) {
         setState(() {
           _letterCompletionStatus[i] = true;
+          _correctAnswers++;
         });
         letterFound = true;
       }
@@ -177,7 +188,7 @@ class _GameScreenState extends State<GameScreen>
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => RisultatiPartitaScreen(),
+          builder: (context) => RisultatiPartitaScreen(gameMode: "spelling", gameTime: _elapsedSeconds, correctAnswers: _correctAnswers),
         ),
       );
     }
@@ -356,6 +367,7 @@ class _GameScreenState extends State<GameScreen>
   @override
   void dispose() {
     _timerController.dispose();
+    _timer?.cancel();
     _cameraController.dispose();
     super.dispose();
   }

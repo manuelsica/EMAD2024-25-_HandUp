@@ -51,6 +51,10 @@ class _HangmanGameScreenState extends State<HangmanGameScreen>
   Set<String> _usedLetters = {}; // Lettere già utilizzate
   List<bool> _letterRevealed = []; // Stato di rivelazione delle lettere
   int _correctAnswers = 0;
+  int _elapsedSeconds = 0;
+  Timer? _timer;
+
+
 
   final String serverUrl = BackendConfig.predictUrl;
 
@@ -76,9 +80,17 @@ class _HangmanGameScreenState extends State<HangmanGameScreen>
       })
       ..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
+          _timer?.cancel();
           _endGame();
         }
       });
+
+      _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        _elapsedSeconds++;
+      });
+    });
+
 
     _timerController.forward();
   }
@@ -183,6 +195,7 @@ class _HangmanGameScreenState extends State<HangmanGameScreen>
 
     // Se tutte le lettere sono state riconosciute, passa alla prossima parola
     if (_letterRevealed.every((status) => status)) {
+      _correctAnswers++;
       _moveToNextWord();
     }
   }
@@ -366,7 +379,7 @@ class _HangmanGameScreenState extends State<HangmanGameScreen>
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => GameSelectionScreen()
+        builder: (context) => RisultatiPartitaScreen(gameMode: "hangman", correctAnswers: _correctAnswers, gameTime: _elapsedSeconds),
       ),
     );
   }
@@ -374,6 +387,7 @@ class _HangmanGameScreenState extends State<HangmanGameScreen>
   @override
   void dispose() {
     _timerController.dispose();
+    _timer?.cancel();
     _cameraController.dispose();
     super.dispose();
   }

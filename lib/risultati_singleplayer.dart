@@ -3,45 +3,130 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import "sidemenu.dart";
 import "app_colors.dart";
-import 'modalita_screen.dart';
 import "top_bar.dart";
 import "difficulty_selection.dart";
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import "selezione_gioco.dart";
 
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]).then((_) {
-    runApp(MyApp());
-  });
+// Classe per i risultati della partita
+class RisultatiPartitaScreen extends StatefulWidget {
+  // Parametri per i risultati della partita
+  final int correctAnswers;
+  final int totalQuestions = 10;
+  final int gameTime;
+  final String gameMode;
+
+  const RisultatiPartitaScreen({
+    Key? key,
+    required this.correctAnswers,
+    required this.gameMode,
+    // required this.totalQuestions,
+    required this.gameTime,
+  }) : super(key: key);
+
+  @override
+  _RisultatiPartitaScreenState createState() => _RisultatiPartitaScreenState();
 }
 
-class MyApp extends StatelessWidget {
+class _RisultatiPartitaScreenState extends State<RisultatiPartitaScreen> {
+  // Storage sicuro per i dati dell'utente
+  final FlutterSecureStorage storage = const FlutterSecureStorage();
+
+  // Variabili di stato
+  int totalPoints = 0;
+  int streak = 0;
+  bool isLoading = true;
+
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Risultati Partita',
-      theme: ThemeData(
-        primarySwatch: Colors.purple,
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  // Carica i dati dell'utente dallo storage
+  Future<void> _loadUserData() async {
+    try {
+      // Recupera i punti totali e la streak dallo storage
+      String? pointsStr = await storage.read(key: 'points');
+      // String? streakStr = await storage.read(key: 'streak');
+
+      setState(() {
+        totalPoints = int.tryParse(pointsStr ?? '0') ?? 0;
+        // streak = int.tryParse(streakStr ?? '0') ?? 0;
+        isLoading = false;
+      });
+
+      // Calcola e salva i nuovi punti
+      await _calculateAndSavePoints();
+    } catch (e) {
+      print('Errore nel caricamento dei dati: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  // Calcola e salva i nuovi punti
+  Future<void> _calculateAndSavePoints() async {
+    // Calcola i punti esperienza basati sulle risposte corrette
+    int experiencePoints = 0;
+    if (widget.gameMode == "spelling") {
+        experiencePoints = widget.correctAnswers * 10;
+    } else if(widget.gameMode == "hangman") {
+        experiencePoints = widget.correctAnswers * 20;
+    }
+
+    // Aggiorna i punti totali
+    int newTotalPoints = totalPoints + experiencePoints;
+
+    // Aggiorna la streak
+    // int newStreak =
+    //     widget.correctAnswers == widget.totalQuestions ? streak + 1 : 0;
+
+    // Salva i nuovi valori
+    await storage.write(key: 'points', value: newTotalPoints.toString());
+    // await storage.write(key: 'streak', value: newStreak.toString());
+
+    setState(() {
+      totalPoints = newTotalPoints;
+      // streak = newStreak;
+    });
+  }
+
+  // Gestisce il pulsante "Gioca di nuovo"
+  void _handlePlayAgain() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DifficultySelectionScreen(gameMode: widget.gameMode),
       ),
-      home: RisultatiPartitaScreen(),
     );
   }
-}
 
-class RisultatiPartitaScreen extends StatelessWidget {
+  // Gestisce il pulsante "Torna alle modalità"
+  void _handleBackToModes() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => GameSelectionScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
+    if (isLoading) {
+      return Scaffold(
+        backgroundColor: AppColors.backgroundColor,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       drawer: SideMenu(),
       body: Stack(
         children: [
-          // Background
           Container(
             decoration: const BoxDecoration(
               color: AppColors.backgroundColor,
@@ -50,39 +135,38 @@ class RisultatiPartitaScreen extends StatelessWidget {
           SafeArea(
             child: Column(
               children: [
-                // Corpo principale della schermata
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Titolo con gradiente
+                        // Titolo
                         AppColors.gradientText(
                           "Risultati della Partita",
-                          24, // Dimensione del font
+                          24,
                         ),
                         SizedBox(height: screenHeight * 0.03),
 
-                        // InfoBox: Tempo di Gioco
+                        // Tempo di gioco
                         InfoBox(
                           label: "Tempo Partita",
-                          value: "01:00",
+                            value: "${(widget.gameTime ~/ 60).toString().padLeft(2, '0')}:${(widget.gameTime % 60).toString().padLeft(2, '0')}",
                           icon: Icons.hourglass_bottom,
                           color: Colors.pinkAccent,
                         ),
                         SizedBox(height: screenHeight * 0.016),
 
-                        // InfoBox: Punti Esperienza
+                        // Punti esperienza
                         InfoBox(
                           label: "Punti Esperienza",
-                          value: "7",
+                          value: (widget.gameMode == "spelling" ? widget.correctAnswers * 10 : widget.correctAnswers * 20).toString(),
                           icon: Icons.star,
                           color: Colors.orangeAccent,
                         ),
                         SizedBox(height: screenHeight * 0.016),
 
-                        // Progressi con gradiente
+                        // Box dei progressi
                         Container(
                           padding: EdgeInsets.all(16),
                           decoration: BoxDecoration(
@@ -94,44 +178,45 @@ class RisultatiPartitaScreen extends StatelessWidget {
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.bar_chart, color: Colors.pinkAccent),
+                                  Icon(Icons.bar_chart,
+                                      color: Colors.pinkAccent),
                                   SizedBox(width: screenWidth * 0.008),
                                   AppColors.gradientText(
-                                    "Progressi", // Testo a sinistra
-                                    18, // Dimensione del font
+                                    "Progressi",
+                                    18,
                                   ),
                                 ],
                               ),
                               SizedBox(height: screenHeight * 0.012),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  // Usa il gradiente per "Punti Totali"
                                   AppColors.gradientText(
-                                    "Punti Totali:", // Testo a sinistra
-                                    20, // Dimensione del font
+                                    "Punti Totali:",
+                                    20,
                                   ),
                                   AppColors.gradientText(
-                                    "900 + 7 = 907", // Testo a destra
-                                    20, // Dimensione del font
+                                    "$totalPoints + ${widget.correctAnswers * 10} = ${totalPoints + widget.correctAnswers * 10}",
+                                    20,
                                   ),
                                 ],
                               ),
-                              SizedBox(height: screenHeight * 0.012),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  // Usa il gradiente per "Streak Consecutive"
-                                  AppColors.gradientText(
-                                    "Streak Consecutive:", // Testo a sinistra
-                                    20, // Dimensione del font
-                                  ),
-                                  AppColors.gradientText(
-                                    "5", // Testo a destra
-                                    20, // Dimensione del font
-                                  ),
-                                ],
-                              ),
+                              // SizedBox(height: screenHeight * 0.012),
+                              // Row(
+                              //   mainAxisAlignment:
+                              //       MainAxisAlignment.spaceBetween,
+                              //   children: [
+                              //     AppColors.gradientText(
+                              //       "Streak Consecutive:",
+                              //       20,
+                              //     ),
+                              //     AppColors.gradientText(
+                              //       streak.toString(),
+                              //       20,
+                              //     ),
+                              //   ],
+                              // ),
                             ],
                           ),
                         ),
@@ -142,19 +227,17 @@ class RisultatiPartitaScreen extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            // Pulsante "Gioca di Nuovo" avvolto in Flexible
                             Flexible(
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.purple,
-                                  padding: EdgeInsets.symmetric(vertical: 14, horizontal: 16), // Ridotto l'horizontal padding
+                                  padding: EdgeInsets.symmetric(
+                                      vertical: 14, horizontal: 16),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(30),
                                   ),
                                 ),
-                                onPressed: () {
-                                  // Azione per il pulsante "Gioca di Nuovo"
-                                },
+                                onPressed: _handlePlayAgain,
                                 child: Text(
                                   "Gioca di Nuovo",
                                   style: GoogleFonts.poppins(
@@ -166,23 +249,19 @@ class RisultatiPartitaScreen extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            SizedBox(width: screenWidth * 0.016), // Spazio tra i pulsanti
-                            // Pulsante "Torna alle Modalità" avvolto in Flexible
+                            SizedBox(width: screenWidth * 0.016),
                             Flexible(
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.containerBorderColor4,
-                                  padding: EdgeInsets.symmetric(vertical: 14, horizontal: 16), // Ridotto l'horizontal padding
+                                  backgroundColor:
+                                      AppColors.containerBorderColor4,
+                                  padding: EdgeInsets.symmetric(
+                                      vertical: 14, horizontal: 16),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(30),
                                   ),
                                 ),
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => DifficultySelectionScreen(gameMode: "spelling")),
-                                  );
-                                },
+                                onPressed: _handleBackToModes,
                                 child: Text(
                                   "Torna alle Modalità",
                                   style: GoogleFonts.poppins(
@@ -210,7 +289,7 @@ class RisultatiPartitaScreen extends StatelessWidget {
   }
 }
 
-// Widget per le informazioni (Tempo, Punti Esperienza, ecc.)
+// Widget per le box informative
 class InfoBox extends StatelessWidget {
   final String label;
   final String value;
@@ -228,7 +307,6 @@ class InfoBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
 
     return Container(
       padding: EdgeInsets.all(16),
@@ -244,14 +322,14 @@ class InfoBox extends StatelessWidget {
               Icon(icon, color: color),
               SizedBox(width: screenWidth * 0.008),
               AppColors.gradientText(
-                label, // Testo della label
-                16, // Dimensione del font
+                label,
+                16,
               ),
             ],
           ),
           AppColors.gradientText(
-            value, // Testo del valore
-            18, // Dimensione del font
+            value,
+            18,
           ),
         ],
       ),
