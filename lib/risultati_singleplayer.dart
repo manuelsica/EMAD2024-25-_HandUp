@@ -84,7 +84,7 @@ class _RisultatiPartitaScreenState extends State<RisultatiPartitaScreen> {
     //     widget.correctAnswers == widget.totalQuestions ? streak + 1 : 0;
 
     // Salva i nuovi valori
-    await storage.write(key: 'points', value: newTotalPoints.toString());
+    // await storage.write(key: 'points', value: newTotalPoints.toString());
     // await storage.write(key: 'streak', value: newStreak.toString());
 
     setState(() {
