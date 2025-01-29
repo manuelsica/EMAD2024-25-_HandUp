@@ -17,6 +17,7 @@ import 'main.dart';
 import 'backend_config.dart';
 import "math_game_screen.dart";
 import "hangman_screen.dart";
+import "scarabeo_screen.dart";
 
 class SideMenu extends StatefulWidget {
   SideMenu({Key? key}) : super(key: key);
@@ -300,12 +301,12 @@ class _SideMenuState extends State<SideMenu> {
         ListTile(
           leading: const Icon(Icons.settings, color: Colors.white),
           title: const Text('Settings', style: TextStyle(color: Colors.white)),
-          // onTap: () {
-          //   Navigator.pushReplacement(
-          //     context,
-          //     MaterialPageRoute(builder: (context) => SettingsSelectionScreen()),
-          //   );
-          // },
+          onTap: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => ScarabeoGameScreen(playerName: "test", opponentName: "test1")),
+            );
+          },
         ),
       ],
     );
