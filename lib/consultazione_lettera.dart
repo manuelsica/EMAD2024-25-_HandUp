@@ -61,11 +61,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _initializeUserData(); // Inizializza i dati utente
   }
 
-  @override
-  void dispose() {
-    socketService.disconnect(); // Disconnette il socket
-    super.dispose();
-  }
 
   /// Inizializza i dati dell'utente recuperando l'username e i punti dalla storage o dal server
   Future<void> _initializeUserData() async {
@@ -345,11 +340,6 @@ class _ConsultazioneLetteraState extends State<ConsultazioneLettera> {
     _initializeUserData(); // Inizializza i dati utente
   }
 
-  @override
-  void dispose() {
-    socketService.disconnect(); // Disconnette il socket
-    super.dispose();
-  }
 
   /// Inizializza i dati dell'utente recuperando l'username e i punti dalla storage o dal server
   Future<void> _initializeUserData() async {

@@ -1,21 +1,21 @@
 // lib/main.dart
 
-import 'dart:math';
-import "dart:io";
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart'; // Importa Provider
+import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+// Socket e Provider
 import 'socket_service.dart';
-import 'sidemenu.dart';
-import 'game_screen_spelling.dart';
+import 'lobby_provider.dart';
+
+// Schermate varie
 import 'app_colors.dart';
-import 'modalita_screen.dart';
+import 'intro_screen.dart';
 import 'login.dart';
 import 'registration.dart';
-import 'intro_screen.dart';
-import "animated_button.dart";
-import 'risultati_partita.dart'; // Assicurati di avere questa schermata
+import 'animated_button.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,13 +30,23 @@ void main() {
     DeviceOrientation.portraitDown,
   ]).then((_) {
     runApp(
+      // Avviamo l'app con MultiProvider che espone
+      // sia SocketService che LobbyProvider a tutti i widget
       MultiProvider(
         providers: [
           Provider<SocketService>(
             create: (_) => SocketService(),
             dispose: (_, socketService) => socketService.dispose(),
           ),
-          // Aggiungi altri provider se necessario
+          ChangeNotifierProxyProvider<SocketService, LobbyProvider>(
+            create: (context) {
+              final socketService = Provider.of<SocketService>(context, listen: false);
+              return LobbyProvider(socketService: socketService);
+            },
+            update: (context, socketService, previous) {
+              return previous ?? LobbyProvider(socketService: socketService);
+            },
+          ),
         ],
         child: const MyApp(),
       ),
@@ -50,7 +60,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'HandUp', // Titolo dell'app
+      title: 'HandUp',
       theme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: AppColors.backgroundColor,
@@ -62,8 +72,9 @@ class MyApp extends StatelessWidget {
         '/intro': (context) => const IntroScreen(),
         '/login': (context) => const LoginPage(),
         '/registration': (context) => const RegistrationPage(),
+        // Aggiungi qui le altre route che ti servono
       },
-      debugShowCheckedModeBanner: false, // Rimuove il debug banner
+      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -73,34 +84,37 @@ class LandingPageScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Ottieni le dimensioni dello schermo
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
     return WillPopScope(
-      onWillPop: () async => false, // Impedisce di chiudere l'app con il pulsante back
+      onWillPop: () async => false, // Impedisce chiusura app col tasto back
       child: Scaffold(
         body: SafeArea(
           child: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Logo container
+                // Logo
                 Container(
                   margin: EdgeInsets.only(bottom: screenHeight * 0.05),
                   child: Image.asset(
                     'assets/logo_handup.png',
-                    width: screenWidth * 1,
+                    width: screenWidth,
                     height: screenHeight * 0.4,
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) {
                       print('Error loading image: $error');
-                      return Icon(Icons.error, size: screenWidth * 0.8, color: Colors.red);
+                      return Icon(
+                        Icons.error,
+                        size: screenWidth * 0.8,
+                        color: Colors.red,
+                      );
                     },
                   ),
                 ),
 
-                // Start Now Button
+                // Inizia Ora
                 AnimatedButton(
                   onPressed: () {
                     Navigator.pushNamed(context, '/intro');
@@ -122,9 +136,9 @@ class LandingPageScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            Color.fromARGB(110, 214, 57, 196),
-                            Color.fromARGB(110, 255, 0, 208),
-                            Color.fromARGB(110, 140, 53, 232)
+                            const Color.fromARGB(110, 214, 57, 196),
+                            const Color.fromARGB(110, 255, 0, 208),
+                            const Color.fromARGB(110, 140, 53, 232),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -145,7 +159,6 @@ class LandingPageScreen extends StatelessWidget {
                           shadowColor: Colors.transparent,
                         ),
                         onPressed: () {
-                          // Naviga alla schermata IntroScreen
                           Navigator.pushNamed(context, '/intro');
                         },
                         child: Text(
@@ -163,7 +176,7 @@ class LandingPageScreen extends StatelessWidget {
 
                 SizedBox(height: screenHeight * 0.02),
 
-                // Login Text Button
+                // Login
                 TextButton(
                   onPressed: () {
                     Navigator.pushNamed(context, '/login');
@@ -171,7 +184,7 @@ class LandingPageScreen extends StatelessWidget {
                   child: AppColors.gradientText('Login', screenWidth * 0.04),
                 ),
 
-                // Registrati Text Button
+                // Registrati
                 TextButton(
                   onPressed: () {
                     Navigator.pushNamed(context, '/registration');

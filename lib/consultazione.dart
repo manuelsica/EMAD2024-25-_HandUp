@@ -78,13 +78,6 @@ class _ConsultazioneScreenState extends State<ConsultazioneScreen>
     _initializeUserData(); // Inizializza i dati utente
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    socketService.disconnect(); // Disconnette il socket
-    super.dispose();
-  }
-
   /// Inizializza i dati dell'utente recuperando l'username e i punti dalla storage o dal server
   Future<void> _initializeUserData() async {
     // Recupera l'username e i punti dalla memorizzazione locale

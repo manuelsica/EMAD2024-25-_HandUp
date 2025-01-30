@@ -60,12 +60,6 @@ class _LeaderboardHomeScreenState extends State<LeaderboardHomeScreen> {
     _initializeUserData(); // Inizializza i dati utente
   }
 
-  @override
-  void dispose() {
-    socketService.disconnect();
-    super.dispose();
-  }
-
   /// Inizializza i dati dell'utente recuperando l'username dalla storage
   Future<void> _initializeUserData() async {
     try {

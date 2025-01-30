@@ -62,66 +62,64 @@ class SocketService {
 
   /// Inizializza la connessione Socket.IO con il token JWT
   Future<void> connect() async {
-    if (_isDisposed) return;
+  if (_isDisposed) return;
 
-    print('Tentativo di lettura del token JWT...');
-    String? token = await _getAccessToken();
-    if (token == null) {
-      print('Token JWT non trovato: effettua login.');
-      return;
-    }
-
-    print('Inizializzazione della connessione Socket.IO...');
-    socket = IO.io(
-      BackendConfig.baseUrl, // Es: 'http://your-server-ip:5001'
-      IO.OptionBuilder()
-          .setTransports(['websocket']) // Usa solo WebSocket
-          .setQuery({'token': token}) // Invia il token come query parameter
-          .enableAutoConnect() // Abilita la connessione automatica
-          .setReconnectionAttempts(10) // Tentativi di riconnessione
-          .setReconnectionDelay(1000) // Ritardo tra i tentativi (ms)
-          .build(),
-    );
-
-    socket?.connect();
-
-    socket?.on('connect', (_) {
-      print('Connesso a Socket.IO');
-      // Rimosso getLobbies()
-      if (!_isListenersInitialized) {
-        listenToEvents();
-        _isListenersInitialized = true;
-      }
-    });
-
-    socket?.on('disconnect', (reason) {
-      print('Disconnesso da Socket.IO: $reason');
-      if (reason == 'io server disconnect') {
-        // La disconnessione è stata iniziata dal server, tentare di riconnettersi
-        socket?.connect();
-      }
-    });
-
-    socket?.on('error', (data) {
-      print('Errore Socket.IO: $data');
-      _errorStreamController.add('Errore Socket.IO: $data');
-    });
-
-    socket?.on('connect_error', (data) {
-      print('Errore di connessione a Socket.IO: $data');
-      _errorStreamController.add('Errore di connessione a Socket.IO: $data');
-    });
+  if (socket != null && socket!.connected) {
+    print("Socket già connesso, nessuna nuova connessione.");
+    return; // Evita connessioni duplicate
   }
+
+  print('Tentativo di connessione Socket.IO...');
+  String? token = await _getAccessToken();
+  if (token == null) {
+    print('Token JWT non trovato: effettua login.');
+    return;
+  }
+
+  socket = IO.io(
+    BackendConfig.baseUrl,
+    IO.OptionBuilder()
+        .setTransports(['websocket'])
+        .setQuery({'token': token})
+        .enableAutoConnect()
+        .setReconnectionAttempts(0) // Riconnessione infinita
+        .setReconnectionDelay(2000)
+        .build(),
+  );
+
+  socket?.connect();
+
+  socket?.on('connect', (_) {
+    print('Connesso a Socket.IO');
+    if (!_isListenersInitialized) {
+      listenToEvents();
+      _isListenersInitialized = true;
+    }
+  });
+
+  socket?.on('disconnect', (reason) {
+    print('Disconnesso da Socket.IO: $reason');
+    if (reason == 'io server disconnect') {
+      print('Tentativo di riconnessione immediata...');
+      socket?.connect();
+    }
+  });
+}
+
+
+void startPing() {
+  Timer.periodic(Duration(seconds: 30), (timer) {
+    if (socket != null && socket!.connected) {
+      socket!.emit('ping', {'timestamp': DateTime.now().millisecondsSinceEpoch});
+      print('Inviato ping al server');
+    }
+  });
+}
+
 
   /// Metodo per recuperare l'access_token dalla SecureStorage
   Future<String?> _getAccessToken() async {
     return await storage.read(key: 'access_token');
-  }
-
-  /// Disconnette manualmente il socket
-  void disconnect() {
-    socket?.disconnect();
-    print('Disconnesso manualmente da Socket.IO');
   }
 
   /// Metodo generico per ascoltare un evento specifico
