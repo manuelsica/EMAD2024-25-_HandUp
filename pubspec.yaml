@@ -103,7 +103,32 @@ flutter:
     - assets/difficulty.png
     - assets/letteraa.png
     - assets/letterav.png
-
+    - assets/lettere3d/letteraA.png
+    - assets/lettere3d/letteraB.png
+    - assets/lettere3d/letteraC.png
+    - assets/lettere3d/letteraD.png
+    - assets/lettere3d/letteraE.png
+    - assets/lettere3d/letteraF.png
+    - assets/lettere3d/letteraG.png
+    - assets/lettere3d/letteraH.png
+    - assets/lettere3d/letteraI.png
+    - assets/lettere3d/letteraJ.png
+    - assets/lettere3d/letteraK.png
+    - assets/lettere3d/letteraL.png
+    - assets/lettere3d/letteraM.png
+    - assets/lettere3d/letteraN.png
+    - assets/lettere3d/letteraO.png
+    - assets/lettere3d/letteraP.png
+    - assets/lettere3d/letteraQ.png
+    - assets/lettere3d/letteraR.png
+    - assets/lettere3d/letteraS.png
+    - assets/lettere3d/letteraT.png
+    - assets/lettere3d/letteraU.png
+    - assets/lettere3d/letteraV.png
+    - assets/lettere3d/letteraW.png
+    - assets/lettere3d/letteraX.png
+    - assets/lettere3d/letteraY.png
+    - assets/lettere3d/letteraZ.png
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
